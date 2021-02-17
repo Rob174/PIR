@@ -1,29 +1,30 @@
 from nuscenceskit.pythonsdk.nuscenes import nuscenes
-import numpy as np
-import Image as img
+from PIL import Image
+from numpy import asarray
+import h5py
 
 nusc = nuscenes.NuScenes(version='v1.0-mini', dataroot='data', verbose=True)
 
-nusc.list_scenes()
+def Nuscenes_import_image_to_array(dirname):
+    im = Image.open(dirname)
+    im_array=asarray(im)
+    return im_array
 
-print('Courgette')
-my_scene = nusc.scene[0]
-print(my_scene)
-first_sample_token = my_scene['first_sample_token']
-my_sample = nusc.get('sample', first_sample_token)
-print(my_sample)
-
-nusc.list_sample(my_sample['token'])
-
-sensor = 'CAM_FRONT'
-cam_front_data = nusc.get('sample_data', my_sample['data'][sensor])
-print(cam_front_data)
+def Add_image_to_h5py(dirname):
+    mon_fichier = h5py.File('./mon_fichier.hdf5', 'a')
+    nuscenes_group = mon_fichier.create_group('nuscenes')
+    ma_matrice = Nuscenes_import_image_to_array(dirname)
+    mon_dataset = nuscenes_group.create_dataset(name='demo_dataset', data=ma_matrice, dtype="i8")
+    mon_fichier.close()
 
 
-nusc.render_sample_data(cam_front_data['token'])
+Add_image_to_h5py("C:/Users/emmab/Pictures/Australie/Australie MOI/Australie/20160206_124831.jpg")
 
 
-def Nuscenes_image_to_array()
+
+
+
+
 
 
 
