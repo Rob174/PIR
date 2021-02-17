@@ -1,4 +1,6 @@
 from nuscenceskit.pythonsdk.nuscenes import nuscenes
+import numpy as np
+import Image as img
 
 nusc = nuscenes.NuScenes(version='v1.0-mini', dataroot='data', verbose=True)
 
@@ -19,5 +21,12 @@ print(cam_front_data)
 
 
 nusc.render_sample_data(cam_front_data['token'])
+
+
+def Nuscenes_image_to_array()
+
+
+
+
 
 
