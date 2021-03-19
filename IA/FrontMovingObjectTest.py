@@ -11,7 +11,7 @@ from tensorflow.keras.utils import plot_model
 def vgg_block(layer_in, n_filters, n_conv):
     # add convolutional layers
     for _ in range(n_conv):
-        layer_in = Conv3D(n_filters, (16, 16, 16), padding='same', activation='relu')(layer_in)
+        layer_in = Conv3D(n_filters, (3, 3, ), padding='same', activation='relu')(layer_in)
     # add max pooling layer
     layer_in = MaxPooling3D((2, 2, 2), strides=(2, 2, 1))(layer_in)
     return layer_in
@@ -20,9 +20,12 @@ def vgg_block(layer_in, n_filters, n_conv):
 # define model input
 visible = Input(shape=(112, 112, 16, 3))
 # add x vgg modules
-layer = vgg_block(visible, 64, 1)
-for x in range(4):
-    layer = vgg_block(layer, 64, 1)
+layer = vgg_block(visible, 16, 1)
+layer = vgg_block(layer, 128, 1)
+layer = vgg_block(layer, 128, 1)
+layer = vgg_block(layer, 256, 1)
+layer = vgg_block(layer, 256, 1)
+
 # create model
 model = Model(inputs=visible, outputs=layer)
 # summarize model
