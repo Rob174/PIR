@@ -1,15 +1,5 @@
 [
 {
-"token": "63a94dfa99bb47529567cd90d3b58384",
-"name": "animal",
-"description": "All animals, e.g. cats, rats, dogs, deer, birds."
-},
-{
-"token": "a86329ee68a0411fb426dcad3b21452f",
-"name": "flat.driveable_surface",
-"description": "Surfaces should be regarded with no concern of traffic rules, lanes etc. Exclude any road obstacles. This includes paved and unpaved surfaces"
-},
-{
 "token": "1fa93b757fc74fb197cdd60001ad8abf",
 "name": "human.pedestrian.adult",
 "description": "Adult subcategory."
@@ -20,19 +10,9 @@
 "description": "Child subcategory."
 },
 {
-"token": "909f1237d34a49d6bdd27c2fe4581d79",
-"name": "human.pedestrian.construction_worker",
-"description": "Construction worker"
-},
-{
-"token": "403fede16c88426885dd73366f16c34a",
-"name": "human.pedestrian.personal_mobility",
-"description": "A small electric or self-propelled vehicle, e.g. skateboard, segway, or scooters, on which the person typically travels in a upright position. Driver and (if applicable) rider should be included in the bounding box along with the vehicle."
-},
-{
-"token": "e3c7da112cd9475a9a10d45015424815",
-"name": "human.pedestrian.police_officer",
-"description": "Police officer."
+"token": "b2d7c6c701254928a9e4d6aac9446d79",
+"name": "human.pedestrian.wheelchair",
+"description": "Wheelchairs. If a person is in the wheelchair, include in the annotation."
 },
 {
 "token": "6a5888777ca14867a8aee3fe539b56c4",
@@ -40,34 +20,34 @@
 "description": "Strollers. If a person is in the stroller, include in the annotation."
 },
 {
-"token": "b2d7c6c701254928a9e4d6aac9446d79",
-"name": "human.pedestrian.wheelchair",
-"description": "Wheelchairs. If a person is in the wheelchair, include in the annotation."
+"token": "403fede16c88426885dd73366f16c34a",
+"name": "human.pedestrian.personal_mobility",
+"description": "A small electric or self-propelled vehicle, e.g. skateboard, segway, or scooters, on which the person typically travels in a upright position. Driver and (if applicable) rider should be included in the bounding box along with the vehicle."
 },
 {
-"token": "653f7efbb9514ce7b81d44070d6208c1",
-"name": "movable_object.barrier",
-"description": "Temporary road barrier placed in the scene in order to redirect traffic. Commonly used at construction sites. This includes concrete barrier, metal barrier and water barrier. No fences."
+"token": "bb867e2064014279863c71a29b1eb381",
+"name": "human.pedestrian.police_officer",
+"description": "Police officer."
 },
 {
-"token": "063c5e7f638343d3a7230bc3641caf97",
-"name": "movable_object.debris",
-"description": "Movable object that is left on the driveable surface that is too large to be driven over safely, e.g tree branch, full trash bag etc."
+"token": "909f1237d34a49d6bdd27c2fe4581d79",
+"name": "human.pedestrian.construction_worker",
+"description": "Construction worker"
 },
 {
-"token": "d772e4bae20f493f98e15a76518b31d7",
-"name": "movable_object.pushable_pullable",
-"description": "Objects that a pedestrian may push or pull. For example dolleys, wheel barrows, garbage-bins, or shopping carts."
+"token": "63a94dfa99bb47529567cd90d3b58384",
+"name": "animal",
+"description": "All animals, e.g. cats, rats, dogs, deer, birds."
 },
 {
-"token": "85abebdccd4d46c7be428af5a6173947",
-"name": "movable_object.trafficcone",
-"description": "All types of traffic cone."
+"token": "fd69059b62a3469fbaef25340c0eab7f",
+"name": "vehicle.car",
+"description": "Vehicle designed primarily for personal use, e.g. sedans, hatch-backs, wagons, vans, mini-vans, SUVs and jeeps. If the vehicle is designed to carry more than 10 people use vehicle.bus. If it is primarily designed to haul cargo use vehicle.truck. "
 },
 {
-"token": "0a30519ee16a4619b4f4acfe2d78fb55",
-"name": "static_object.bicycle_rack",
-"description": "Area or device intended to park or secure the bicycles in a row. It includes all the bikes parked in it and any empty slots that are intended for parking bikes."
+"token": "dfd26f200ade4d24b540184e16050022",
+"name": "vehicle.motorcycle",
+"description": "Gasoline or electric powered 2-wheeled vehicle designed to move rapidly (at the speed of standard cars) on the road surface. This category includes all motorcycles, vespas and scooters."
 },
 {
 "token": "fc95c87b806f48f8a1faea2dcc2222a4",
@@ -85,19 +65,14 @@
 "description": "Rigid bus subcategory."
 },
 {
-"token": "fd69059b62a3469fbaef25340c0eab7f",
-"name": "vehicle.car",
-"description": "Vehicle designed primarily for personal use, e.g. sedans, hatch-backs, wagons, vans, mini-vans, SUVs and jeeps. If the vehicle is designed to carry more than 10 people use vehicle.bus. If it is primarily designed to haul cargo use vehicle.truck. "
+"token": "6021b5187b924d64be64a702e5570edf",
+"name": "vehicle.truck",
+"description": "Vehicles primarily designed to haul cargo including pick-ups, lorrys, trucks and semi-tractors. Trailers hauled after a semi-tractor should be labeled as vehicle.trailer"
 },
 {
 "token": "5b3cd6f2bca64b83aa3d0008df87d0e4",
 "name": "vehicle.construction",
 "description": "Vehicles primarily designed for construction. Typically very slow moving or stationary. Cranes and extremities of construction vehicles are only included in annotations if they interfere with traffic. Trucks used to haul rocks or building materials are considered vehicle.truck rather than construction vehicles."
-},
-{
-"token": "7754874e6d0247f9855ae19a4028bf0e",
-"name": "vehicle.ego",
-"description": "Ego vehicle."
 },
 {
 "token": "732cce86872640628788ff1bb81006d4",
@@ -110,18 +85,33 @@
 "description": "All types of police vehicles including police bicycles and motorcycles."
 },
 {
-"token": "dfd26f200ade4d24b540184e16050022",
-"name": "vehicle.motorcycle",
-"description": "Gasoline or electric powered 2-wheeled vehicle designed to move rapidly (at the speed of standard cars) on the road surface. This category includes all motorcycles, vespas and scooters."
-},
-{
 "token": "90d0f6f8e7c749149b1b6c3a029841a8",
 "name": "vehicle.trailer",
 "description": "Any vehicle trailer, both for trucks, cars and bikes."
 },
 {
-"token": "6021b5187b924d64be64a702e5570edf",
-"name": "vehicle.truck",
-"description": "Vehicles primarily designed to haul cargo including pick-ups, lorrys, trucks and semi-tractors. Trailers hauled after a semi-tractor should be labeled as vehicle.trailer"
+"token": "653f7efbb9514ce7b81d44070d6208c1",
+"name": "movable_object.barrier",
+"description": "Temporary road barrier placed in the scene in order to redirect traffic. Commonly used at construction sites. This includes concrete barrier, metal barrier and water barrier. No fences."
+},
+{
+"token": "85abebdccd4d46c7be428af5a6173947",
+"name": "movable_object.trafficcone",
+"description": "All types of traffic cone."
+},
+{
+"token": "d772e4bae20f493f98e15a76518b31d7",
+"name": "movable_object.pushable_pullable",
+"description": "Objects that a pedestrian may push or pull. For example dolleys, wheel barrows, garbage-bins, or shopping carts."
+},
+{
+"token": "063c5e7f638343d3a7230bc3641caf97",
+"name": "movable_object.debris",
+"description": "Movable object that is left on the driveable surface that is too large to be driven over safely, e.g tree branch, full trash bag etc."
+},
+{
+"token": "0a30519ee16a4619b4f4acfe2d78fb55",
+"name": "static_object.bicycle_rack",
+"description": "Area or device intended to park or secure the bicycles in a row. It includes all the bikes parked in it and any empty slots that are intended for parking bikes."
 }
 ]
