@@ -75,7 +75,41 @@ def extract_lidar_annotation():
         json.dump(file, fout)
 
 
-extract_lidar_annotation()
+def get_scene(imageName):
+    sceneName=imageName.partition("+")[0]
+    return sceneName
+
+
+
+def extract_scene_annotations():
+    with open("extracted_data_nusceneImage.json") as jsonfile:
+        input = json.loads(jsonfile.read())
+        file = []
+        for image in input:
+            filename = image['imageName']
+            scenename = get_scene(filename)
+            annotation = list(image['categories'])
+            find_scene=False
+            for i in file:
+                if (scenename==i['scene']):
+                    i['images'].append(filename)
+                    find_annotation = False
+                    for j in annotation:
+                        for k in i['categories']:
+                            if (k==j):
+                                find_annotation=True
+                        if (find_annotation==False):
+                            i['categories'].append(j)
+            if (find_scene==False):
+                file.append({"scene": scenename, "images": [filename],"categories":annotation})
+        with open("extracted_scene_annotation.json", 'w') as fout:
+            json.dump(file, fout)
+
+
+extract_scene_annotations()
+
+
+
 
 
 
