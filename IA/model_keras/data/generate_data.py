@@ -5,7 +5,7 @@ import random
 
 class Nexet_dataset:
     def __init__(self):
-        with open(var, 'r') as dataset:
+        with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)
             self.correspondances_classes = {
                 "animal": 0,
@@ -43,7 +43,7 @@ class Nexet_dataset:
     def getLabels(self, index_image):
         dico_categorie_image = self.content_dataset[index_image]["categories"]
         nb_boundingbox = 0
-        label = np.zeros((len(self.correspondances_classes.values)))
+        label = np.zeros((len(self.correspondances_classes.values())))
         for k, v in dico_categorie_image.items():
             nb_boundingbox += len(v)
             label[self.correspondances_classes[k]] += len(v)
@@ -57,7 +57,7 @@ class Nexet_dataset:
             random.shuffle(index_imgs)
             for i in range(len(self.content_dataset)):
                 bufferImg.append(self.getImage(i))
-                bufferLabel.append(self.getLabel(i))
+                bufferLabel.append(self.getLabels(i))
                 if len(bufferImg) % self.batch_size == 0 and i > 0:
                     batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                     bufferLabel, bufferImg = [], []
