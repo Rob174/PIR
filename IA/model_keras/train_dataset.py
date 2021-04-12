@@ -43,6 +43,8 @@ for epochs in range(1):
                 liste_lossValid.append(loss)
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
+            if compteur == 1080:
+                break
         except StopIteration:
             print("Epoch %d done" % epochs)
             break
