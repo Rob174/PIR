@@ -22,7 +22,7 @@ class Nexet_dataset:
                 "movable_object.debris": 9,
                 "movable_object.pushable_pullable": 10,
                 "movable_object.trafficcone": 11,
-                "static_object.bicycle_rack *": 12,
+                "static_object.bicycle_rack": 12,
                 "vehicle.bicycle": 13,
                 "vehicle.bus.bendy": 14,
                 "vehicle.bus.rigid": 15,
@@ -52,7 +52,7 @@ class Nexet_dataset:
         label = np.zeros((len(self.correspondances_classes.values())))
         for k, v in dico_categorie_image.items():
             nb_boundingbox += len(v)
-            label[self.correspondances_classes[k]] += len(v)
+            label[self.correspondances_classes[k]] += len(v) # KeyError: 'static_object.bicycle_rack'
         label = label / nb_boundingbox
         return label
     def getNextBatchTr(self):

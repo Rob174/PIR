@@ -4,6 +4,8 @@ from tensorflow.keras.losses import SparseCategoricalCrossentropy
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+import matplotlib
+matplotlib.use('Agg')
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -43,22 +45,24 @@ for epochs in range(1):
                 liste_lossValid.append(loss)
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
+                plot()
             if compteur == 1080:
                 break
         except StopIteration:
             print("Epoch %d done" % epochs)
             break
-fig, axe_error = plt.subplots()
-loss_axe = axe_error.twinx()
-loss_axe.plot(
-    np.array(Lcoordx_tr)*dataset.batch_size,
-    liste_lossTr, color="r", label="lossTr")
-loss_axe.plot(np.array(Lcoordx_valid)*dataset.batch_size, liste_lossValid,color="orange",label="lossValid")
-axe_error.plot(np.array(Lcoordx_tr)*dataset.batch_size, 100 * (1 - np.array(liste_accuracyTr)), color="g", label="tr_error")
-axe_error.plot(np.array(Lcoordx_valid)*dataset.batch_size,100*(1-np.array(liste_accuracyValid)),color="b",label="valid_error")
-axe_error.set_xlabel("Nombre d'itérations (nb de batch parcourus/lots d'images)")
-axe_error.set_ylabel("Error (%)")
-loss_axe.set_ylabel("Loss (sparsecategoricalcrossentropy)")
-fig.legend()
-plt.grid()
-plt.savefig("/home/rmoine/Documents/erreur_accuracy.png")
+def plot():
+    fig, axe_error = plt.subplots()
+    loss_axe = axe_error.twinx()
+    loss_axe.plot(
+        np.array(Lcoordx_tr)*dataset.batch_size,
+        liste_lossTr, color="r", label="lossTr")
+    loss_axe.plot(np.array(Lcoordx_valid)*dataset.batch_size, liste_lossValid,color="orange",label="lossValid")
+    axe_error.plot(np.array(Lcoordx_tr)*dataset.batch_size, 100 * (1 - np.array(liste_accuracyTr)), color="g", label="tr_error")
+    axe_error.plot(np.array(Lcoordx_valid)*dataset.batch_size,100*(1-np.array(liste_accuracyValid)),color="b",label="valid_error")
+    axe_error.set_xlabel("Nombre d'itérations (nb de batch parcourus/lots d'images)")
+    axe_error.set_ylabel("Error (%)")
+    loss_axe.set_ylabel("Loss (sparsecategoricalcrossentropy)")
+    fig.legend()
+    plt.grid()
+    plt.savefig("/home/rmoine/Documents/erreur_accuracy.png")
