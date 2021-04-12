@@ -2,7 +2,16 @@ from data.generate_data import Nexet_dataset
 from model.model import make_model
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
 
+physical_devices = tf.config.list_physical_devices('GPU')
+for device in physical_devices:
+    try:
+      tf.config.experimental.set_memory_growth(device, True)
+    except:
+      # Invalid device or cannot modify virtual devices once initialized.
+      pass
 dataset = Nexet_dataset()
 liste_loss=[]
 liste_accuracy=[]
@@ -14,6 +23,7 @@ for epochs in range(1):
     while True:
         try:
             batchImg, batchLabel = next(iterator)
+            batchLabel = np.argmax(batchLabel,axis=1)
             print(batchImg.shape, batchLabel.shape)
             [loss,accuracy]=model.train_on_batch(batchImg,batchLabel)
             liste_loss.append(loss)

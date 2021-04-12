@@ -65,7 +65,7 @@ def make_model(input_shape, num_classes):
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = layers.Dropout(0.5)(x)
     #couche fully connected layer
-    outputs = layers.Dense(units, activation=activation)(x)
+    outputs = layers.Dense(num_classes, activation="softmax")(x)
     return keras.Model(inputs, outputs)
 
 
