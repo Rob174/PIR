@@ -49,16 +49,14 @@ class Nexet_dataset:
             label[self.correspondances_classes[k]] += len(v)
         label = label / nb_boundingbox
         return label
-
     def getNextBatch(self):
         bufferLabel, bufferImg = [], []
         index_imgs = list(range(len(self.content_dataset)))
-        while True:
-            random.shuffle(index_imgs)
-            for i in range(len(self.content_dataset)):
-                bufferImg.append(self.getImage(i))
-                bufferLabel.append(self.getLabels(i))
-                if len(bufferImg) % self.batch_size == 0 and i > 0:
-                    batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
-                    bufferLabel, bufferImg = [], []
-                    yield batches
+        random.shuffle(index_imgs)
+        for i in range(len(self.content_dataset)):
+            bufferImg.append(self.getImage(i))
+            bufferLabel.append(self.getLabels(i))
+            if len(bufferImg) % self.batch_size == 0 and i > 0:
+                batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
+                bufferLabel, bufferImg = [], []
+                yield batches
