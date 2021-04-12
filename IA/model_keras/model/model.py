@@ -13,13 +13,12 @@ from tensorflow.keras import layers
 '''couche par ordre input, couche de convolution(filtre, noyau,stride(pas de déplacement), padding(),batchNormalisation(ameliorer la convergence )'''
 
 def make_model(input_shape, num_classes):
-    image_size = (180, 180)
     inputs = keras.Input(shape=input_shape)
 
     # Entry block
     #preprocess the data
-    x = layers.experimental.preprocessing.Rescaling(1.0 / 255)(x)
-    x = layers.Conv2D(32, 3, strides=2, padding="same")(x)
+    #x = layers.experimental.preprocessing.Rescaling(1.0 / 255)(inputs)
+    x = layers.Conv2D(32, 3, strides=2, padding="same")(inputs)
     x = layers.BatchNormalization()(x)
     #fonction d'activation
     x = layers.Activation("relu")(x)
@@ -63,15 +62,13 @@ def make_model(input_shape, num_classes):
         activation = "softmax"
         units = num_classes
 
-'''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
+    '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = layers.Dropout(0.5)(x)
     #couche fully connected layer
     outputs = layers.Dense(units, activation=activation)(x)
     return keras.Model(inputs, outputs)
 
 
-model = make_model(input_shape=image_size + (3,), num_classes=2)
-keras.utils.plot_model(model, show_shapes=True)
 
 #units a modifier car nb de classes
 #load le json et parcourir les images

@@ -37,7 +37,7 @@ class Nexet_dataset:
             self.root_dir= "/scratch/rmoine/PIR/nuscene/"
     def getImage(self, index_image):
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
-        image = np.array(Image.open(path))
+        image = (np.array(Image.open(path)))/255.
         return image
 
     def getLabels(self, index_image):
