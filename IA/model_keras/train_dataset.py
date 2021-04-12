@@ -24,7 +24,7 @@ Lcoordx_valid = []
 
 accur_step = 5
 model = make_model((dataset.image_shape[1], dataset.image_shape[0],3), num_classes=len(dataset.correspondances_classes.keys()))
-model.compile(optimizer="adam", loss=SparseCategoricalCrossentropy(), metrics=["accuracy"])
+model.compile(optimizer="adam", loss="MSE", metrics=["accuracy"])
 iteratorValid = dataset.getNextBatchValid()
 compteur=0
 
@@ -39,17 +39,18 @@ def plot():
     axe_error.plot(np.array(Lcoordx_valid)*dataset.batch_size,100*(1-np.array(liste_accuracyValid)),color="b",label="valid_error")
     axe_error.set_xlabel("Nombre d'itérations (nb de batch parcourus/lots d'images)")
     axe_error.set_ylabel("Error (%)")
-    loss_axe.set_ylabel("Loss (sparsecategoricalcrossentropy)")
+    loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
     plt.grid()
     plt.savefig("/home/rmoine/Documents/erreur_accuracy.png")
+    plt.clf()
+    plt.close(fig)
 
 for epochs in range(1):
     iteratorTr = dataset.getNextBatchTr()
     while True:
         try:
             batchImg, batchLabel = next(iteratorTr)
-            batchLabel = np.argmax(batchLabel,axis=1)
             [loss,accuracy]=model.train_on_batch(batchImg,batchLabel)
             liste_lossTr.append(loss)
             liste_accuracyTr.append(accuracy)
@@ -57,7 +58,6 @@ for epochs in range(1):
             compteur=compteur+1
             if compteur % accur_step == 0:
                 batchImg, batchLabel = next(iteratorValid)
-                batchLabel = np.argmax(batchLabel,axis=1)
                 [loss,accuracy]=model.test_on_batch(batchImg,batchLabel)
                 liste_lossValid.append(loss)
                 liste_accuracyValid.append(accuracy)
