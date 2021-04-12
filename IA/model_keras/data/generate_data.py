@@ -35,9 +35,12 @@ class Nexet_dataset:
             self.nb_images= len(self.content_dataset)
             self.batch_size=10
             self.root_dir= "/scratch/rmoine/PIR/nuscene/"
+            width, height = Image.open(self.root_dir + self.content_dataset[0]["imageName"]).size
+            self.image_shape = (width//4,height//4)
     def getImage(self, index_image):
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
-        image = (np.array(Image.open(path)))/255.
+        image = Image.open(path)
+        image = image.resize(self.image_shape)
         return image
 
     def getLabels(self, index_image):

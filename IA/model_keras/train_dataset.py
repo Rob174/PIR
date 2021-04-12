@@ -15,7 +15,7 @@ for device in physical_devices:
 dataset = Nexet_dataset()
 liste_loss=[]
 liste_accuracy=[]
-model = make_model((900, 1600,3), num_classes=len(dataset.correspondances_classes.keys()))
+model = make_model((dataset.image_shape[1], dataset.image_shape[0],3), num_classes=len(dataset.correspondances_classes.keys()))
 model.compile(optimizer="adam", loss=SparseCategoricalCrossentropy(), metrics=["accuracy"])
 for epochs in range(1):
     iterator = dataset.getNextBatch()
@@ -24,7 +24,6 @@ for epochs in range(1):
         try:
             batchImg, batchLabel = next(iterator)
             batchLabel = np.argmax(batchLabel,axis=1)
-            print(batchImg.shape, batchLabel.shape)
             [loss,accuracy]=model.train_on_batch(batchImg,batchLabel)
             liste_loss.append(loss)
             liste_accuracy.append(accuracy)
@@ -34,6 +33,14 @@ for epochs in range(1):
         except StopIteration:
             print("Epoch %d done" % epochs)
             break
-plt.plot(liste_loss,color="r")
-plt.plot(liste_accuracy, color="g")
-plt.savefig("/home/acalmet/Documents/erreur_accuracy.png")
+fig, axe_error = plt.subplots()
+loss_axe = axe_error.twinx()
+loss_axe.plot(np.arange(0,len(liste_loss)*dataset.batch_size,dataset.batch_size),liste_loss,color="r",label="loss")
+axe_error.plot(np.arange(0,len(liste_accuracy)*dataset.batch_size,dataset.batch_size),100*(1-np.array(liste_accuracy)),
+               color="g",label="tr_error")
+axe_error.set_xlabel("Nombre d'itérations (nb de batch parcourus/lots d'images)")
+axe_error.set_ylabel("Error (%)")
+loss_axe.set_ylabel("Loss (sparsecategoricalcrossentropy)")
+fig.legend()
+plt.grid()
+plt.savefig("/home/rmoine/Documents/erreur_accuracy.png")
