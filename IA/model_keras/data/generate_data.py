@@ -4,9 +4,11 @@ from PIL import Image
 import random
 
 class Nexet_dataset:
-    def __init__(self):
+    def __init__(self,tr_prct=0.6):
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)
+            self.dataset_tr = self.content_dataset[:int(len(self.content_dataset)*tr_prct)]
+            self.dataset_valid = self.content_dataset[int(len(self.content_dataset)*tr_prct):]
             self.correspondances_classes = {
                 "animal": 0,
                 "human.pedestrian.adult": 1,
@@ -32,11 +34,12 @@ class Nexet_dataset:
                 "vehicle.trailer": 21,
                 "vehicle.truck": 22
             }
-            self.nb_images= len(self.content_dataset)
             self.batch_size=10
+            # Récupère la taille des images
             self.root_dir= "/scratch/rmoine/PIR/nuscene/"
             width, height = Image.open(self.root_dir + self.content_dataset[0]["imageName"]).size
             self.image_shape = (width//4,height//4)
+
     def getImage(self, index_image):
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
         image = Image.open(path)
@@ -52,14 +55,27 @@ class Nexet_dataset:
             label[self.correspondances_classes[k]] += len(v)
         label = label / nb_boundingbox
         return label
-    def getNextBatch(self):
+    def getNextBatchTr(self):
         bufferLabel, bufferImg = [], []
-        index_imgs = list(range(len(self.content_dataset)))
+        index_imgs = list(range(len(self.dataset_tr)))
         random.shuffle(index_imgs)
-        for i in range(len(self.content_dataset)):
+        for i in range(len(self.dataset_tr)):
             bufferImg.append(self.getImage(i))
             bufferLabel.append(self.getLabels(i))
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
                 yield batches
+
+    def getNextBatchValid(self):
+        bufferLabel, bufferImg = [], []
+        index_imgs = list(range(len(self.dataset_valid)))
+        random.shuffle(index_imgs)
+        while True:
+            for i in range(len(self.dataset_valid)):
+                bufferImg.append(self.getImage(i))
+                bufferLabel.append(self.getLabels(i))
+                if len(bufferImg) % self.batch_size == 0 and i > 0:
+                    batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
+                    bufferLabel, bufferImg = [], []
+                    yield batches
