@@ -25,7 +25,7 @@ Lcoordx_valid = []
 
 accur_step = 5
 model = make_model((dataset.image_shape[1], dataset.image_shape[0],3), num_classes=len(dataset.correspondances_classes.keys()))
-model.compile(optimizer=Adam(learning_rate=1e-4,epsilon=1e-7), loss="MSE", metrics=["accuracy"])
+model.compile(optimizer=Adam(learning_rate=1e-2,epsilon=1e-7), loss="MSE", metrics=["accuracy"])
 iteratorValid = dataset.getNextBatchValid()
 compteur=0
 
@@ -38,7 +38,7 @@ def plot():
     loss_axe.plot(np.array(Lcoordx_valid)*dataset.batch_size, liste_lossValid,color="orange",label="lossValid")
     axe_error.plot(np.array(Lcoordx_tr)*dataset.batch_size, 100 * (1 - np.array(liste_accuracyTr)), color="g", label="tr_error")
     axe_error.plot(np.array(Lcoordx_valid)*dataset.batch_size,100*(1-np.array(liste_accuracyValid)),color="b",label="valid_error")
-    axe_error.set_xlabel("Nombre d'itérations (nb de batch parcourus/lots d'images)")
+    axe_error.set_xlabel("Nombre d'itérations, d'images passées")
     axe_error.set_ylabel("Error (%)")
     loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
