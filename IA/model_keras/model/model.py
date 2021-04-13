@@ -55,12 +55,6 @@ def make_model(input_shape, num_classes):
 
     '''moyenne de toute les valeurs au lieu du max'''
     x = layers.GlobalAveragePooling2D()(x)
-    if num_classes == 2:
-        activation = "sigmoid"
-        units = 1
-    else:
-        activation = "softmax"
-        units = num_classes
 
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = layers.Dropout(0.5)(x)

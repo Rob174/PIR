@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import matplotlib
+from tensorflow.keras.optimizers import Adam
 matplotlib.use('Agg')
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -24,7 +25,7 @@ Lcoordx_valid = []
 
 accur_step = 5
 model = make_model((dataset.image_shape[1], dataset.image_shape[0],3), num_classes=len(dataset.correspondances_classes.keys()))
-model.compile(optimizer="adam", loss="MSE", metrics=["accuracy"])
+model.compile(optimizer=Adam(learning_rate=0.001,epsilon=1e-5), loss="MSE", metrics=["accuracy"])
 iteratorValid = dataset.getNextBatchValid()
 compteur=0
 
