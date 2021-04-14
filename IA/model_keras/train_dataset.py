@@ -6,6 +6,12 @@ import numpy as np
 import tensorflow as tf
 import matplotlib
 from tensorflow.keras.optimizers import Adam
+import argparse
+parser = argparse.ArgumentParser()
+parser.parse_args()
+
+parser.add_argument('-bs', dest='batch_size', default=10, type=int,
+                    help="[Optionnel] Indique le nombre d'images par batch")
 matplotlib.use('Agg')
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -16,6 +22,7 @@ for device in physical_devices:
       # Invalid device or cannot modify virtual devices once initialized.
       pass
 dataset = Nexet_dataset()
+dataset.batch_size = parser.batch_size
 liste_lossTr=[]
 liste_accuracyTr=[]
 liste_lossValid=[]
@@ -43,7 +50,7 @@ def plot():
     loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
     plt.grid()
-    plt.savefig("/home/rmoine/Documents/erreur_accuracy.png")
+    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d.png" % dataset.batch_size)
     plt.clf()
     plt.close(fig)
 
