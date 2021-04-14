@@ -1,0 +1,3 @@
+[submodule "IA/improved_graph"]
+	path = IA/improved_graph
+	url = https://github.com/Rob174/improved_graph.git
