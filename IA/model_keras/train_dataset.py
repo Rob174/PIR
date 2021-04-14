@@ -1,14 +1,4 @@
-import os
 import argparse
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument('-bs', dest='batch_size', default=10, type=int,
-                    help="[Optionnel] Indique le nombre d'images par batch")
-parser.add_argument('-gpu', dest='gpu_selected', default="0", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-args = parser.parse_args()
-os.environ["CUDA_VISIBLE_DEVICES"]=args.gpu_selected
 
 from data.generate_data import Nexet_dataset
 from model.model import make_model
@@ -28,6 +18,16 @@ for device in physical_devices:
     except:
         # Invalid device or cannot modify virtual devices once initialized.
         pass
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-bs', dest='batch_size', default=10, type=int,
+                    help="[Optionnel] Indique le nombre d'images par batch")
+parser.add_argument('-gpu', dest='gpu_selected', default="0", type=str,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
+args = parser.parse_args()
+
+
 dataset = Nexet_dataset()
 dataset.batch_size = args.batch_size
 liste_lossTr = []
@@ -38,9 +38,10 @@ Lcoordx_tr = []
 Lcoordx_valid = []
 
 accur_step = 5
-model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3),
-                   num_classes=len(dataset.correspondances_classes.keys()))
-model.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-1), loss="MSE", metrics=["accuracy"])
+with tf.device('/gpu:'+args.gpu_selected):
+    model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3),
+                       num_classes=len(dataset.correspondances_classes.keys()))
+    model.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-1), loss="MSE", metrics=["accuracy"])
 iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
