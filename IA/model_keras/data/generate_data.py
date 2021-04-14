@@ -4,7 +4,7 @@ from PIL import Image
 import random
 
 class Nexet_dataset:
-    def __init__(self,tr_prct=0.6):
+    def __init__(self,tr_prct=0.6,img_width=1600):
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)
             self.dataset_tr = self.content_dataset[:int(len(self.content_dataset)*tr_prct)]
@@ -37,8 +37,9 @@ class Nexet_dataset:
             self.batch_size=10
             # Récupère la taille des images
             self.root_dir= "/scratch/rmoine/PIR/nuscene/"
-            width, height = Image.open(self.root_dir + self.content_dataset[0]["imageName"]).size
-            self.image_shape = (width//4,height//4)
+            width, height = Image.open(self.root_dir + self.content_dataset[0]["imageName"]).size # 1600x900
+            self.image_shape = (img_width,int(img_width/width*height))
+            print("shape : ",self.image_shape)
 
     def getImage(self, index_image):
         path = self.root_dir + self.content_dataset[index_image]["imageName"]

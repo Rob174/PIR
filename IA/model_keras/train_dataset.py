@@ -14,6 +14,7 @@ matplotlib.use('Agg')
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     try:
+        print(device)
         tf.config.experimental.set_memory_growth(device, True)
     except:
         # Invalid device or cannot modify virtual devices once initialized.
@@ -25,10 +26,12 @@ parser.add_argument('-bs', dest='batch_size', default=10, type=int,
                     help="[Optionnel] Indique le nombre d'images par batch")
 parser.add_argument('-gpu', dest='gpu_selected', default="0", type=str,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-img_w', dest='image_width', default=400, type=str,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
 args = parser.parse_args()
 
 
-dataset = Nexet_dataset()
+dataset = Nexet_dataset(img_width=args.image_width)
 dataset.batch_size = args.batch_size
 liste_lossTr = []
 liste_accuracyTr = []
@@ -38,10 +41,10 @@ Lcoordx_tr = []
 Lcoordx_valid = []
 
 accur_step = 5
-with tf.device('/gpu:'+args.gpu_selected):
+with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3),
                        num_classes=len(dataset.correspondances_classes.keys()))
-    model.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-1), loss="MSE", metrics=["accuracy"])
+    model.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-7), loss="MSE", metrics=["accuracy"])
 iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
@@ -72,14 +75,16 @@ for epochs in range(1):
     while True:
         try:
             batchImg, batchLabel = next(iteratorTr)
-            [loss, accuracy] = model.train_on_batch(batchImg, batchLabel)
+            with tf.device('/GPU:'+args.gpu_selected):
+                [loss, accuracy] = model.train_on_batch(batchImg, batchLabel)
             liste_lossTr.append(loss)
             liste_accuracyTr.append(accuracy)
             Lcoordx_tr.append(compteur)
             compteur = compteur + 1
             if compteur % accur_step == 0:
                 batchImg, batchLabel = next(iteratorValid)
-                [loss, accuracy] = model.test_on_batch(batchImg, batchLabel)
+                with tf.device('/GPU:' + args.gpu_selected):
+                    [loss, accuracy] = model.test_on_batch(batchImg, batchLabel)
                 liste_lossValid.append(loss)
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
