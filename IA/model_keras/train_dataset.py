@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-bs', dest='batch_size', default=10, type=int,
                     help="[Optionnel] Indique le nombre d'images par batch")
-parser.parse_args()
+args = parser.parse_args()
 matplotlib.use('Agg')
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -22,7 +22,7 @@ for device in physical_devices:
       # Invalid device or cannot modify virtual devices once initialized.
       pass
 dataset = Nexet_dataset()
-dataset.batch_size = parser.batch_size
+dataset.batch_size = args.batch_size
 liste_lossTr=[]
 liste_accuracyTr=[]
 liste_lossValid=[]
