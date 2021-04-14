@@ -52,7 +52,19 @@ with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3),
                        num_classes=len(dataset.correspondances_classes.keys()))
     model.keras_layer.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-7), loss="MSE", metrics=["accuracy"])
-model.save("/home/rmoine/Documents/PIRfolder/data/graph.dot")
+from time import strftime, gmtime
+import os
+class FolderInfos:
+    base_folder = None
+    base_filename = None
+    @staticmethod
+    def init():
+        id = strftime("%Y-%m-%d_%Hh%Mmin%Ss", gmtime())
+        FolderInfos.base_folder= "/".join(os.path.realpath(__file__).split("/")[:-2]+["data"])+id+"/"
+        FolderInfos.base_filename = FolderInfos.base_folder + id
+        os.mkdir(FolderInfos.base_folder)
+FolderInfos.init()
+model.save(FolderInfos.base_filename+"graph.dot")
 iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
