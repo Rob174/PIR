@@ -8,10 +8,10 @@ import matplotlib
 from tensorflow.keras.optimizers import Adam
 import argparse
 parser = argparse.ArgumentParser()
-parser.parse_args()
 
 parser.add_argument('-bs', dest='batch_size', default=10, type=int,
                     help="[Optionnel] Indique le nombre d'images par batch")
+parser.parse_args()
 matplotlib.use('Agg')
 
 physical_devices = tf.config.list_physical_devices('GPU')
