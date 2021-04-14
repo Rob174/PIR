@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 import random
 
-class Nexet_dataset:
+class Nuscene_dataset:
     def __init__(self,tr_prct=0.6,img_width=1600):
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)

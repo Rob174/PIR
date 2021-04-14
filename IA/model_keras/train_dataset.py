@@ -7,7 +7,7 @@ sys.path.append("/".join(chemin_fichier[:-3]))
 print("/".join(chemin_fichier[:-2]+["improved_graph"]))
 sys.path.append("/".join(chemin_fichier[:-2]+["improved_graph","src","layers"]))
 from IA.improved_graph.src.layers.node_model import *
-from IA.model_keras.data.generate_data import Nexet_dataset
+from IA.model_keras.data.generate_data import Nuscene_dataset
 from model.model import make_model
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 import matplotlib.pyplot as plt
@@ -38,7 +38,7 @@ parser.add_argument('-img_w', dest='image_width', default=400, type=int,
 args = parser.parse_args()
 
 
-dataset = Nexet_dataset(img_width=args.image_width)
+dataset = Nuscene_dataset(img_width=args.image_width)
 dataset.batch_size = args.batch_size
 liste_lossTr = []
 liste_accuracyTr = []
