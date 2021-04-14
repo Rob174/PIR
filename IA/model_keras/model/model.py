@@ -3,75 +3,57 @@
 # Press Maj+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
-from tensorflow.keras import layers
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+from IA.improved_graph.src.layers.base_layers import Input,Conv2D,BatchNormalization,Activation,SeparableConv2D,\
+    MaxPooling2D,Add,GlobalAveragePooling2D,Dropout,Dense
+from IA.improved_graph.src.layers.node_model import *
 
 
 '''cette fonction permet de créer le modéle(architecture de l'IA)'''
 '''couche par ordre input, couche de convolution(filtre, noyau,stride(pas de déplacement), padding(),batchNormalisation(ameliorer la convergence )'''
-
+import tensorflow as tf
 def make_model(input_shape, num_classes):
-    inputs = keras.Input(shape=input_shape)
+    inputs = Input(shape=input_shape)
 
     # Entry block
     #preprocess the data
-    #x = layers.experimental.preprocessing.Rescaling(1.0 / 255)(inputs)
-    x = layers.Conv2D(32, 3, strides=2, padding="same")(inputs)
-    x = layers.BatchNormalization()(x)
+    x = Conv2D(filters=32, kernel_size=3, strides=2, padding="same")(inputs)
+    x = BatchNormalization()(x)
     #fonction d'activation
-    x = layers.Activation("relu")(x)
+    x = Activation(activation="relu")(x)
 
-    x = layers.Conv2D(64, 3, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = Conv2D(filters=64, kernel_size=3, padding="same")(x)
+    x = BatchNormalization()(x)
+    x = Activation(activation="relu")(x)
 
     previous_block_activation = x  # Set aside residual
 
     for size in [128, 256, 512, 728]:
-        x = layers.Activation("relu")(x)
+        x = Activation(activation="relu")(x)
         #réduit le nombre de parametre (matrice multipliée au lieu de matrice normale)
-        x = layers.SeparableConv2D(size, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+        x = SeparableConv2D(filters=size, kernel_size=3, padding="same")(x)
+        x = BatchNormalization()(x)
 
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+        x = Activation(activation="relu")(x)
+        x = SeparableConv2D(filters=size, kernel_size=3, padding="same")(x)
+        x = BatchNormalization()(x)
 
         #couche de pooling
-        x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+        x = MaxPooling2D(pool_size=3, strides=2, padding="same")(x)
 
         # Project residual
-        residual = layers.Conv2D(size, 1, strides=2, padding="same")(
-            previous_block_activation
-        )
-        x = layers.add([x, residual])  # Add back residual
+        residual = Conv2D(filters=size, kernel_size=1, strides=2, padding="same")(previous_block_activation)
+        x = Add()([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
 
-    x = layers.SeparableConv2D(1024, 3, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = SeparableConv2D(filters=1024, kernel_size=3, padding="same")(x)
+    x = BatchNormalization()(x)
+    x = Activation(activation="relu")(x)
 
     '''moyenne de toute les valeurs au lieu du max'''
-    x = layers.GlobalAveragePooling2D()(x)
+    x = GlobalAveragePooling2D()(x)
 
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
-    x = layers.Dropout(0.5)(x)
+    x = Dropout(rate=0.5)(x)
     #couche fully connected layer
-    outputs = layers.Dense(num_classes, activation="softmax")(x)
-    return keras.Model(inputs, outputs)
-
-
-
-#units a modifier car nb de classes
-#load le json et parcourir les images
-
-#json = ....
-#for epoch in range(nb_epoch):
-#   # Mélanger
-#   for dico_img in json:
-#        open image ds array numpy + label
-#        input = image
-#       outpuyt = label
-#       loss = model.train_on_batch(input, output)
+    outputs = Dense(units=num_classes, activation="softmax")(x)
+    return Model([inputs], [outputs],name="keras_model")

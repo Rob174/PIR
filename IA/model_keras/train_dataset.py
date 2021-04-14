@@ -1,6 +1,13 @@
 import argparse
-
-from data.generate_data import Nexet_dataset
+import os
+import sys
+chemin_fichier = os.path.realpath(__file__).split("/")
+sys.path.append("/".join(chemin_fichier[:-2]))
+sys.path.append("/".join(chemin_fichier[:-3]))
+print("/".join(chemin_fichier[:-2]+["improved_graph"]))
+sys.path.append("/".join(chemin_fichier[:-2]+["improved_graph","src","layers"]))
+from IA.improved_graph.src.layers.node_model import *
+from IA.model_keras.data.generate_data import Nexet_dataset
 from model.model import make_model
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 import matplotlib.pyplot as plt
@@ -44,7 +51,8 @@ accur_step = 5
 with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3),
                        num_classes=len(dataset.correspondances_classes.keys()))
-    model.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-7), loss="MSE", metrics=["accuracy"])
+    model.keras_layer.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-7), loss="MSE", metrics=["accuracy"])
+model.save("/home/rmoine/Documents/PIRfolder/data/graph.dot")
 iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
@@ -89,7 +97,7 @@ for epochs in range(1):
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
                 plot()
-            if compteur == 1080:
+            if compteur == 100:
                 break
         except StopIteration:
             print("Epoch %d done" % epochs)
