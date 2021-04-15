@@ -6,10 +6,8 @@ sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
 print("/".join(chemin_fichier[:-2]+["improved_graph"]))
 sys.path.append("/".join(chemin_fichier[:-2]+["improved_graph","src","layers"]))
-from IA.improved_graph.src.layers.node_model import *
 from IA.model_keras.data.generate_data import Nuscene_dataset
 from model.model import make_model
-from tensorflow.keras.losses import SparseCategoricalCrossentropy
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -96,7 +94,7 @@ for epochs in range(1):
         try:
             batchImg, batchLabel = next(iteratorTr)
             with tf.device('/GPU:'+args.gpu_selected):
-                [loss, accuracy] = model.train_on_batch(batchImg, batchLabel)
+                [loss, accuracy] = model.keras_layer.train_on_batch(batchImg, batchLabel)
             liste_lossTr.append(loss)
             liste_accuracyTr.append(accuracy)
             Lcoordx_tr.append(compteur)
@@ -104,7 +102,7 @@ for epochs in range(1):
             if compteur % accur_step == 0:
                 batchImg, batchLabel = next(iteratorValid)
                 with tf.device('/GPU:' + args.gpu_selected):
-                    [loss, accuracy] = model.test_on_batch(batchImg, batchLabel)
+                    [loss, accuracy] = model.keras_layer.test_on_batch(batchImg, batchLabel)
                 liste_lossValid.append(loss)
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
