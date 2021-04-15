@@ -107,7 +107,7 @@ for epochs in range(1):
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
                 plot()
-            if compteur == 100:
+            if compteur == 1080:
                 break
         except StopIteration:
             print("Epoch %d done" % epochs)
