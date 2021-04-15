@@ -11,7 +11,7 @@ from IA.improved_graph.src.layers.node_model import *
 '''cette fonction permet de créer le modéle(architecture de l'IA)'''
 '''couche par ordre input, couche de convolution(filtre, noyau,stride(pas de déplacement), padding(),batchNormalisation(ameliorer la convergence )'''
 import tensorflow as tf
-def make_model(input_shape, num_classes):
+def make_model(input_shape, num_classes,last_activation="linear"):
     inputs = Input(shape=input_shape)
 
     # Entry block
@@ -55,5 +55,5 @@ def make_model(input_shape, num_classes):
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = Dropout(rate=0.5)(x)
     #couche fully connected layer
-    outputs = Dense(units=num_classes, activation="softplus")(x)
+    outputs = Dense(units=num_classes, activation=last_activation)(x)
     return Model([inputs], [outputs],name="keras_model")

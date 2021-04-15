@@ -37,6 +37,10 @@ parser.add_argument('-lr', dest='lr', default=1e-3, type=float,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
 parser.add_argument('-eps', dest='epsilon', default=1e-7, type=float,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-lastAct', dest='lastActivation', default="linear", type=str,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-approxAccur', dest='approximationAccuracy', default="none", type=str,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
 args = parser.parse_args()
 
 
@@ -51,7 +55,7 @@ Lcoordx_valid = []
 
 accur_step = 5
 with tf.device('/GPU:'+args.gpu_selected):
-    model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3),
+    model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,args.lastActivation),
                        num_classes=len(dataset.correspondances_classes.keys()))
     model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE", metrics=["accuracy"])
 from time import strftime, gmtime
@@ -66,7 +70,8 @@ class FolderInfos:
         FolderInfos.base_filename = FolderInfos.base_folder + id
         os.mkdir(FolderInfos.base_folder)
 FolderInfos.init()
-model.save(FolderInfos.base_filename+"graph.dot")
+model.save(FolderInfos.base_filename+"_bs_%d_lastAct_%s_accurApprox_%s_graph.dot"
+           % (dataset.batch_size,args.lastActivation,args.approximationAccuracy))
 iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
@@ -87,11 +92,20 @@ def plot():
     loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
     plt.grid()
-    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d.png" % dataset.batch_size)
+    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s.png"
+                % (dataset.batch_size,args.lastActivation,args.approximationAccuracy))
     plt.clf()
     plt.close(fig)
 
-fonction_approximation = np.round
+fonction_approximation = None
+if args.approximationAccuracy == "none":
+    fonction_approximation = lambda x:x
+elif args.lastActivation == "round":
+    fonction_approximation = np.round
+elif args.lastActivation == "int":
+    fonction_approximation = int
+else:
+    raise Exception("Unknown approximation function %s" % args.approximationAccuracy)
 
 for epochs in range(1):
     iteratorTr = dataset.getNextBatchTr()
