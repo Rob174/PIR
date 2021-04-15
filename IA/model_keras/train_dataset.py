@@ -33,6 +33,10 @@ parser.add_argument('-gpu', dest='gpu_selected', default="0", type=str,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
 parser.add_argument('-img_w', dest='image_width', default=400, type=int,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-lr', dest='lr', default=1e-3, type=float,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-eps', dest='epsilon', default=1e-7, type=float,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
 args = parser.parse_args()
 
 
@@ -49,7 +53,7 @@ accur_step = 5
 with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3),
                        num_classes=len(dataset.correspondances_classes.keys()))
-    model.keras_layer.compile(optimizer=Adam(learning_rate=1e-3, epsilon=1e-7), loss="MSE", metrics=["accuracy"])
+    model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE", metrics=["accuracy"])
 from time import strftime, gmtime
 import os
 class FolderInfos:
