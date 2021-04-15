@@ -55,8 +55,9 @@ Lcoordx_valid = []
 
 accur_step = 5
 with tf.device('/GPU:'+args.gpu_selected):
-    model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,args.lastActivation),
-                       num_classes=len(dataset.correspondances_classes.keys()))
+    model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
+                       num_classes=len(dataset.correspondances_classes.keys()),
+                       last_activation=args.lastActivation)
     model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE", metrics=["accuracy"])
 from time import strftime, gmtime
 import os
