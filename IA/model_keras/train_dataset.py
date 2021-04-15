@@ -91,7 +91,7 @@ def plot():
     plt.clf()
     plt.close(fig)
 
-fonction_approximation = np.round
+fonction_approximation = int
 
 for epochs in range(1):
     iteratorTr = dataset.getNextBatchTr()
