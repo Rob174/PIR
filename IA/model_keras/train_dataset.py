@@ -54,11 +54,33 @@ Lcoordx_tr = []
 Lcoordx_valid = []
 
 accur_step = 5
+
+
+def approx_accuracy(modeApprox="none"):
+    fct_approx = None
+    if modeApprox == "none":
+        fct_approx = lambda x:x
+    elif args.approximationAccuracy == "round":
+        fct_approx = tf.math.round
+    elif args.approximationAccuracy == "int":
+        fct_approx = tf.math.floor
+    else:
+        raise Exception("Unknown approximation function %s" % modeApprox)
+
+    def approx_accuracy_round(y_true,y_pred):
+        diff =  y_true - fct_approx(y_pred)
+        nb_egaux_zeros = tf.equal(diff,0)
+        nb_egaux_zeros = tf.cast(nb_egaux_zeros, tf.int32)
+        count = tf.reduce_sum(nb_egaux_zeros)
+        return count
+    return approx_accuracy_round
+
 with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
                        num_classes=len(dataset.correspondances_classes.keys()),
                        last_activation=args.lastActivation)
-    model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE", metrics=["accuracy"])
+    model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE",
+                              metrics=[approx_accuracy(args.approximationAccuracy)])
 from time import strftime, gmtime
 import os
 class FolderInfos:
@@ -98,15 +120,6 @@ def plot():
     plt.clf()
     plt.close(fig)
 
-fonction_approximation = None
-if args.approximationAccuracy == "none":
-    fonction_approximation = lambda x:x
-elif args.approximationAccuracy == "round":
-    fonction_approximation = np.round
-elif args.approximationAccuracy == "int":
-    fonction_approximation = int
-else:
-    raise Exception("Unknown approximation function %s" % args.approximationAccuracy)
 
 for epochs in range(1):
     iteratorTr = dataset.getNextBatchTr()
@@ -116,7 +129,7 @@ for epochs in range(1):
             with tf.device('/GPU:'+args.gpu_selected):
                 [loss, accuracy] = model.keras_layer.train_on_batch(batchImg, batchLabel)
             liste_lossTr.append(loss)
-            liste_accuracyTr.append(fonction_approximation(accuracy))
+            liste_accuracyTr.append(accuracy)
             Lcoordx_tr.append(compteur)
             compteur = compteur + 1
             if compteur % accur_step == 0:
@@ -124,7 +137,7 @@ for epochs in range(1):
                 with tf.device('/GPU:' + args.gpu_selected):
                     [loss, accuracy] = model.keras_layer.test_on_batch(batchImg, batchLabel)
                 liste_lossValid.append(loss)
-                liste_accuracyValid.append(fonction_approximation(accuracy))
+                liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
                 plot()
             if compteur == 1080:
