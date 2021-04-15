@@ -91,6 +91,7 @@ def plot():
     plt.clf()
     plt.close(fig)
 
+fonction_approximation = np.round
 
 for epochs in range(1):
     iteratorTr = dataset.getNextBatchTr()
@@ -100,7 +101,7 @@ for epochs in range(1):
             with tf.device('/GPU:'+args.gpu_selected):
                 [loss, accuracy] = model.keras_layer.train_on_batch(batchImg, batchLabel)
             liste_lossTr.append(loss)
-            liste_accuracyTr.append(accuracy)
+            liste_accuracyTr.append(fonction_approximation(accuracy))
             Lcoordx_tr.append(compteur)
             compteur = compteur + 1
             if compteur % accur_step == 0:
@@ -108,7 +109,7 @@ for epochs in range(1):
                 with tf.device('/GPU:' + args.gpu_selected):
                     [loss, accuracy] = model.keras_layer.test_on_batch(batchImg, batchLabel)
                 liste_lossValid.append(loss)
-                liste_accuracyValid.append(accuracy)
+                liste_accuracyValid.append(fonction_approximation(accuracy))
                 Lcoordx_valid.append(compteur)
                 plot()
             if compteur == 1080:
