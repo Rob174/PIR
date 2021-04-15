@@ -55,5 +55,5 @@ def make_model(input_shape, num_classes):
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = Dropout(rate=0.5)(x)
     #couche fully connected layer
-    outputs = Dense(units=num_classes, activation="sigmoid")(x)
+    outputs = Dense(units=num_classes, activation="relu")(x)
     return Model([inputs], [outputs],name="keras_model")
