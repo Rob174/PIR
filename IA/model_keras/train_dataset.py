@@ -101,9 +101,9 @@ def plot():
 fonction_approximation = None
 if args.approximationAccuracy == "none":
     fonction_approximation = lambda x:x
-elif args.lastActivation == "round":
+elif args.approximationAccuracy == "round":
     fonction_approximation = np.round
-elif args.lastActivation == "int":
+elif args.approximationAccuracy == "int":
     fonction_approximation = int
 else:
     raise Exception("Unknown approximation function %s" % args.approximationAccuracy)
