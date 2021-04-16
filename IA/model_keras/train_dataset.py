@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import matplotlib
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam,SGD
 from tensorflow.keras.metrics import categorical_accuracy
 
 matplotlib.use('Agg')
@@ -50,6 +50,8 @@ parser.add_argument('-redLayer', dest='reduction_layer', default="globalavgpool"
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
 parser.add_argument('-dptRate', dest='dropout_rate', default="0.5", type=str,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-opti', dest='optimizer', default="adam", type=str,
+                    help="[Optionnel] Optimisateur")
 args = parser.parse_args()
 
 dataset = Nuscene_dataset(img_width=args.image_width)
@@ -87,7 +89,13 @@ with tf.device('/GPU:' + args.gpu_selected):
                                      last_activation=args.lastActivation,
                                      nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
                                      dropout_rate=float(args.dropout_rate))
-    model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE",
+    if args.optimizer == "adam":
+        optimizer =  Adam(learning_rate=args.lr, epsilon=args.epsilon)
+    elif args.optimizer == "sgd":
+        optimizer = SGD( learning_rate=0.045, momentum=0.9, nesterov=False)
+    else:
+        raise Exception("Optimizer %s not supported" % args.optimizer)
+    model.keras_layer.compile(optimizer=optimizer, loss="MSE",
                               metrics=[approx_accuracy(args.approximationAccuracy)])
 from time import strftime, gmtime
 import os
