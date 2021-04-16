@@ -5,12 +5,13 @@
 
 from IA.improved_graph.src.layers.base_layers import Input, Conv2D, BatchNormalization, Activation, SeparableConv2D, \
     MaxPooling2D, Add, GlobalAveragePooling2D, Dropout, Dense, Flatten
+import tensorflow as tf
+
 from IA.improved_graph.src.layers.node_model import *
 import tensorflow.keras.regularizers as regularizers
 
 '''cette fonction permet de créer le modéle(architecture de l'IA)'''
 '''couche par ordre input, couche de convolution(filtre, noyau,stride(pas de déplacement), padding(),batchNormalisation(ameliorer la convergence )'''
-import tensorflow as tf
 
 
 def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4, reduction_layer="globalavgpool",
@@ -19,12 +20,12 @@ def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4,
 
     # Entry block
     # preprocess the data
-    x = Conv2D(filters=32, kernel_size=3, strides=2, padding="same")(inputs)
+    x = Conv2D(filters=32, kernel_size=3, strides=2, padding="same",use_bias=False)(inputs)
     x = BatchNormalization()(x)
     # fonction d'activation
     x = Activation(activation="relu")(x)
 
-    x = Conv2D(filters=64, kernel_size=3, padding="same")(x)
+    x = Conv2D(filters=64, kernel_size=3, padding="same",use_bias=False)(x)
     x = BatchNormalization()(x)
     x = Activation(activation="relu")(x)
 
@@ -34,22 +35,22 @@ def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4,
     for size in liste_filtres[:-1]:
         x = Activation(activation="relu")(x)
         # réduit le nombre de parametre (matrice multipliée au lieu de matrice normale)
-        x = SeparableConv2D(filters=size, kernel_size=3, padding="same")(x)
+        x = SeparableConv2D(filters=size, kernel_size=3, padding="same",use_bias=False)(x)
         x = BatchNormalization()(x)
 
         x = Activation(activation="relu")(x)
-        x = SeparableConv2D(filters=size, kernel_size=3, padding="same")(x)
+        x = SeparableConv2D(filters=size, kernel_size=3, padding="same",use_bias=False)(x)
         x = BatchNormalization()(x)
 
         # couche de pooling
         x = MaxPooling2D(pool_size=3, strides=2, padding="same")(x)
 
         # Project residual
-        residual = Conv2D(filters=size, kernel_size=1, strides=2, padding="same")(previous_block_activation)
+        residual = Conv2D(filters=size, kernel_size=1, strides=2, padding="same",use_bias=False)(previous_block_activation)
         x = Add()([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
 
-    x = SeparableConv2D(filters=liste_filtres[-1], kernel_size=3, padding="same")(x)
+    x = SeparableConv2D(filters=liste_filtres[-1], kernel_size=3, padding="same",use_bias=False)(x)
     x = BatchNormalization()(x)
     x = Activation(activation="relu")(x)
 
