@@ -13,6 +13,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.metrics import categorical_accuracy
 
 matplotlib.use('Agg')
 
@@ -68,12 +69,9 @@ def approx_accuracy(modeApprox="none"):
         raise Exception("Unknown approximation function %s" % modeApprox)
 
     def approx_accuracy_round(y_true,y_pred):
-        diff =  y_true - fct_approx(y_pred)
-        nb_egaux_zeros = tf.equal(diff,0)
-        nb_egaux_zeros = tf.cast(nb_egaux_zeros, tf.int32)
-        count = tf.reduce_sum(nb_egaux_zeros)
-        return count
+        return categorical_accuracy(y_true,fct_approx(y_pred))
     return approx_accuracy_round
+
 
 with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
