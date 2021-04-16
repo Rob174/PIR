@@ -44,6 +44,10 @@ parser.add_argument('-approxAccur', dest='approximationAccuracy', default="none"
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
 parser.add_argument('-nbMod', dest='nb_modules', default=4, type=int,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-redLayer', dest='reduction_layer', default="globalavgpool", type=str,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-dptRate', dest='dropout_rate', default="0.5", type=str,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
 args = parser.parse_args()
 
 
@@ -79,7 +83,8 @@ with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
                        num_classes=len(dataset.correspondances_classes.keys()),
                        last_activation=args.lastActivation,
-                       nb_modules=args.nb_modules)
+                       nb_modules=args.nb_modules,reduction_layer=args.reduction_layer,
+                       dropout_rate=float(args.dropout_rate))
     model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE",
                               metrics=[approx_accuracy(args.approximationAccuracy)])
 from time import strftime, gmtime
@@ -94,8 +99,9 @@ class FolderInfos:
         FolderInfos.base_filename = FolderInfos.base_folder + id
         os.mkdir(FolderInfos.base_folder)
 FolderInfos.init()
-model.save(FolderInfos.base_filename+"_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_graph.dot"
-           % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,args.nb_modules))
+model.save(FolderInfos.base_filename+"_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%f_redLay_%s_graph.dot"
+           % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,
+              args.nb_modules,args.dropout_rate,args.reduction_layer))
 iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
@@ -116,8 +122,9 @@ def plot():
     loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
     plt.grid()
-    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d.png"
-                % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,args.nb_modules))
+    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%f_redLay_%s.png"
+                % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,args.nb_modules,
+                   args.dropout_rate,args.reduction_layer))
     plt.clf()
     plt.close(fig)
 
