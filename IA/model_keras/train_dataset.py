@@ -99,7 +99,7 @@ class FolderInfos:
         FolderInfos.base_filename = FolderInfos.base_folder + id
         os.mkdir(FolderInfos.base_folder)
 FolderInfos.init()
-model.save(FolderInfos.base_filename+"_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%f_redLay_%s_graph.dot"
+model.save(FolderInfos.base_filename+"_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s_graph.dot"
            % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,
               args.nb_modules,args.dropout_rate,args.reduction_layer))
 iteratorValid = dataset.getNextBatchValid()
@@ -122,7 +122,7 @@ def plot():
     loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
     plt.grid()
-    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%f_redLay_%s.png"
+    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s.png"
                 % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,args.nb_modules,
                    args.dropout_rate,args.reduction_layer))
     plt.clf()
