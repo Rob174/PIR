@@ -39,13 +39,13 @@ def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4,
     # Entry block
     # preprocess the data
     x = inception(conv1_filters=3,
-                    conv3_filters=[3,32],
-                    conv5_filters=[3,16],
-                    pool_red_filters=16,input=inputs,index=1)
-    x = inception(conv1_filters=32,
-                        conv3_filters=[32,64],
-                        conv5_filters=[24,48],
-                        pool_red_filters=48,input=x,index=2)
+                    conv3_filters=[3,16],
+                    conv5_filters=[3,8],
+                    pool_red_filters=8,input=inputs,index=1)
+    x = inception(conv1_filters=16,
+                        conv3_filters=[10,32],
+                        conv5_filters=[10,16],
+                        pool_red_filters=16,input=x,index=2)
 
     previous_block_activation = x  # Set aside residual
     liste_filtres = [128, 256, 512, 728, 1024]
