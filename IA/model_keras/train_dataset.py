@@ -17,6 +17,7 @@ import matplotlib
 from tensorflow.keras.optimizers import Adam,SGD
 from tensorflow.keras.metrics import categorical_accuracy
 
+# faire le padding des images
 matplotlib.use('Agg')
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -90,7 +91,7 @@ with tf.device('/GPU:' + args.gpu_selected):
                      nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
                      dropout_rate=float(args.dropout_rate))
     if args.optimizer == "adam":
-        optimizer =  Adam(learning_rate=args.lr, epsilon=args.epsilon)
+        optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)
     elif args.optimizer == "sgd":
         optimizer = SGD( learning_rate=0.045, momentum=0.9, nesterov=False)
     else:
