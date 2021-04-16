@@ -84,11 +84,11 @@ def approx_accuracy(modeApprox="none"):
 
 
 with tf.device('/GPU:' + args.gpu_selected):
-    model = make_model_inception_top((dataset.image_shape[1], dataset.image_shape[0], 3,),
-                                     num_classes=len(dataset.correspondances_classes.keys()),
-                                     last_activation=args.lastActivation,
-                                     nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
-                                     dropout_rate=float(args.dropout_rate))
+    model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
+                     num_classes=len(dataset.correspondances_classes.keys()),
+                     last_activation=args.lastActivation,
+                     nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
+                     dropout_rate=float(args.dropout_rate))
     if args.optimizer == "adam":
         optimizer =  Adam(learning_rate=args.lr, epsilon=args.epsilon)
     elif args.optimizer == "sgd":
