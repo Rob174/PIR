@@ -42,6 +42,8 @@ parser.add_argument('-lastAct', dest='lastActivation', default="linear", type=st
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
 parser.add_argument('-approxAccur', dest='approximationAccuracy', default="none", type=str,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
+parser.add_argument('-nbMod', dest='nb_modules', default=4, type=int,
+                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
 args = parser.parse_args()
 
 
@@ -76,7 +78,8 @@ def approx_accuracy(modeApprox="none"):
 with tf.device('/GPU:'+args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
                        num_classes=len(dataset.correspondances_classes.keys()),
-                       last_activation=args.lastActivation)
+                       last_activation=args.lastActivation,
+                       nb_modules=args.nb_modules)
     model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE",
                               metrics=[approx_accuracy(args.approximationAccuracy)])
 from time import strftime, gmtime
