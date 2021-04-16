@@ -1,13 +1,15 @@
 import argparse
 import os
 import sys
+
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
-print("/".join(chemin_fichier[:-2]+["improved_graph"]))
-sys.path.append("/".join(chemin_fichier[:-2]+["improved_graph","src","layers"]))
+print("/".join(chemin_fichier[:-2] + ["improved_graph"]))
+sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers"]))
 from IA.model_keras.data.generate_data import Nuscene_dataset
-from model.model import make_model
+from IA.model_keras.model.model_orig import make_model
+from IA.model_keras.model.model_inception_top import make_model as make_model_inception_top
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -50,7 +52,6 @@ parser.add_argument('-dptRate', dest='dropout_rate', default="0.5", type=str,
                     help="[Optionnel] Indique la gpu visible par le script tensorflow")
 args = parser.parse_args()
 
-
 dataset = Nuscene_dataset(img_width=args.image_width)
 dataset.batch_size = args.batch_size
 liste_lossTr = []
@@ -66,7 +67,7 @@ accur_step = 5
 def approx_accuracy(modeApprox="none"):
     fct_approx = None
     if modeApprox == "none":
-        fct_approx = lambda x:x
+        fct_approx = lambda x: x
     elif args.approximationAccuracy == "round":
         fct_approx = tf.math.round
     elif args.approximationAccuracy == "int":
@@ -74,34 +75,40 @@ def approx_accuracy(modeApprox="none"):
     else:
         raise Exception("Unknown approximation function %s" % modeApprox)
 
-    def approx_accuracy_round(y_true,y_pred):
-        return categorical_accuracy(y_true,fct_approx(y_pred))
+    def approx_accuracy_round(y_true, y_pred):
+        return categorical_accuracy(y_true, fct_approx(y_pred))
+
     return approx_accuracy_round
 
 
-with tf.device('/GPU:'+args.gpu_selected):
-    model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
-                       num_classes=len(dataset.correspondances_classes.keys()),
-                       last_activation=args.lastActivation,
-                       nb_modules=args.nb_modules,reduction_layer=args.reduction_layer,
-                       dropout_rate=float(args.dropout_rate))
+with tf.device('/GPU:' + args.gpu_selected):
+    model = make_model_inception_top((dataset.image_shape[1], dataset.image_shape[0], 3,),
+                                     num_classes=len(dataset.correspondances_classes.keys()),
+                                     last_activation=args.lastActivation,
+                                     nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
+                                     dropout_rate=float(args.dropout_rate))
     model.keras_layer.compile(optimizer=Adam(learning_rate=args.lr, epsilon=args.epsilon), loss="MSE",
                               metrics=[approx_accuracy(args.approximationAccuracy)])
 from time import strftime, gmtime
 import os
+
+
 class FolderInfos:
     base_folder = None
     base_filename = None
+
     @staticmethod
     def init():
         id = strftime("%Y-%m-%d_%Hh%Mmin%Ss", gmtime())
-        FolderInfos.base_folder= "/".join(os.path.realpath(__file__).split("/")[:-3]+["data/"])+id+"/"
+        FolderInfos.base_folder = "/".join(os.path.realpath(__file__).split("/")[:-3] + ["data/"]) + id + "/"
         FolderInfos.base_filename = FolderInfos.base_folder + id
         os.mkdir(FolderInfos.base_folder)
+
+
 FolderInfos.init()
-model.save(FolderInfos.base_filename+"_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s_graph.dot"
-           % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,
-              args.nb_modules,args.dropout_rate,args.reduction_layer))
+model.save(FolderInfos.base_filename + "_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s_graph.dot"
+           % (dataset.batch_size, args.lastActivation, args.approximationAccuracy,
+              args.nb_modules, args.dropout_rate, args.reduction_layer))
 iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
@@ -122,9 +129,10 @@ def plot():
     loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
     plt.grid()
-    plt.savefig(FolderInfos.base_filename+"erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s.png"
-                % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,args.nb_modules,
-                   args.dropout_rate,args.reduction_layer))
+    plt.savefig(
+        FolderInfos.base_filename + "erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s.png"
+        % (dataset.batch_size, args.lastActivation, args.approximationAccuracy, args.nb_modules,
+           args.dropout_rate, args.reduction_layer))
     plt.clf()
     plt.close(fig)
 
@@ -134,7 +142,7 @@ for epochs in range(1):
     while True:
         try:
             batchImg, batchLabel = next(iteratorTr)
-            with tf.device('/GPU:'+args.gpu_selected):
+            with tf.device('/GPU:' + args.gpu_selected):
                 [loss, accuracy] = model.keras_layer.train_on_batch(batchImg, batchLabel)
             liste_lossTr.append(loss)
             liste_accuracyTr.append(accuracy)
