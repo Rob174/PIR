@@ -52,9 +52,7 @@ class Nuscene_dataset:
         nb_boundingbox = 0
         label = np.zeros((len(self.correspondances_classes.values())))
         for k, v in dico_categorie_image.items():
-            nb_boundingbox += len(v)
-            label[self.correspondances_classes[k]] += len(v) # KeyError: 'static_object.bicycle_rack'
-        label = label / nb_boundingbox
+            label[self.correspondances_classes[k]] += len(v)
         return label
     def getNextBatchTr(self):
         bufferLabel, bufferImg = [], []
