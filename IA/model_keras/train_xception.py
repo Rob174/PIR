@@ -107,13 +107,12 @@ with tf.device('/GPU:' + "2"):
         weights="imagenet",
         input_tensor=None,
         input_shape=None,
-        pooling=None,
-        classifier_activation="softmax"
+        pooling=None
     )
     input = Input(shape=(299,299,3))
-    model_inception_cut = Model(inputs=[model_xception.input],output=[model_xception.get_layer("avg_pool").output])(input)
-    output = Dense(len(dataset.correspondances_classes.keys()))
-    model = Model(inputs=[input],outputs=[output])
+    model_inception_cut = Model(inputs=model_xception.input,outputs=model_xception.get_layer("avg_pool").output)(input)
+    output = Dense(len(dataset.correspondances_classes.keys()))(model_inception_cut)
+    model = Model(inputs=input,outputs=output)
     model.compile(optimizer=SGD( learning_rate=0.045, momentum=0.9, nesterov=False), loss="MSE",
                   metrics=[approx_accuracy(args.approximationAccuracy)])
 
