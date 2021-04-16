@@ -4,7 +4,7 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 from IA.improved_graph.src.layers.base_layers import Input,Conv2D,BatchNormalization,Activation,SeparableConv2D,\
-    MaxPooling2D,Add,GlobalAveragePooling2D,Dropout,Dense
+    MaxPooling2D,Add,GlobalAveragePooling2D,Dropout,Dense,Flatten
 from IA.improved_graph.src.layers.node_model import *
 
 
@@ -51,7 +51,7 @@ def make_model(input_shape, num_classes,last_activation="linear",nb_modules=4):
     x = Activation(activation="relu")(x)
 
     '''moyenne de toute les valeurs au lieu du max'''
-    x = GlobalAveragePooling2D()(x)
+    x = Flatten()(x)
 
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = Dropout(rate=0.5)(x)
