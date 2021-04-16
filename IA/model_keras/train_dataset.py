@@ -95,7 +95,7 @@ class FolderInfos:
     @staticmethod
     def init():
         id = strftime("%Y-%m-%d_%Hh%Mmin%Ss", gmtime())
-        FolderInfos.base_folder= "/".join(os.path.realpath(__file__).split("/")[:-2]+["data"])+id+"/"
+        FolderInfos.base_folder= "/".join(os.path.realpath(__file__).split("/")[:-3]+["data/"])+id+"/"
         FolderInfos.base_filename = FolderInfos.base_folder + id
         os.mkdir(FolderInfos.base_folder)
 FolderInfos.init()
@@ -122,7 +122,7 @@ def plot():
     loss_axe.set_ylabel("Loss (MSE)")
     fig.legend()
     plt.grid()
-    plt.savefig("/home/rmoine/Documents/erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s.png"
+    plt.savefig(FolderInfos.base_filename+"erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s.png"
                 % (dataset.batch_size,args.lastActivation,args.approximationAccuracy,args.nb_modules,
                    args.dropout_rate,args.reduction_layer))
     plt.clf()
