@@ -6,6 +6,7 @@
 from IA.improved_graph.src.layers.base_layers import Input,Conv2D,BatchNormalization,Activation,SeparableConv2D,\
     MaxPooling2D,Add,GlobalAveragePooling2D,Dropout,Dense,Flatten
 from IA.improved_graph.src.layers.node_model import *
+import tensorflow.keras.regularizers as regularizers
 
 
 '''cette fonction permet de créer le modéle(architecture de l'IA)'''
@@ -61,5 +62,8 @@ def make_model(input_shape, num_classes,last_activation="linear",nb_modules=4,re
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = Dropout(rate=dropout_rate)(x)
     #couche fully connected layer
-    outputs = Dense(units=num_classes, activation=last_activation)(x)
+    outputs = Dense(units=num_classes, activation=last_activation,
+                    kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
+                    bias_regularizer=regularizers.l2(1e-4),
+                    activity_regularizer=regularizers.l2(1e-5))(x)
     return Model([inputs], [outputs],name="keras_model")
