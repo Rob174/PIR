@@ -7,7 +7,7 @@ import sys
 import matplotlib
 import matplotlib.pyplot as plt
 from tensorflow.keras.metrics import categorical_accuracy
-from tensorflow_core.python.keras.optimizers import SGD
+from tensorflow.keras.optimizers import SGD
 import numpy as np
 
 chemin_fichier = os.path.realpath(__file__).split("/")
@@ -113,7 +113,7 @@ with tf.device('/GPU:' + "2"):
     model_inception_cut = Model(inputs=model_xception.input,outputs=model_xception.get_layer("avg_pool").output)(input)
     output = Dense(len(dataset.correspondances_classes.keys()))(model_inception_cut)
     model = Model(inputs=input,outputs=output)
-    model.compile(optimizer=SGD( learning_rate=0.045, momentum=0.9, nesterov=False), loss="MSE",
+    model.compile(optimizer=SGD(learning_rate=0.045, momentum=0.9, nesterov=False), loss=tf.keras.losses.cosine_similarity,
                   metrics=[approx_accuracy(args.approximationAccuracy)])
 
 def plot():
@@ -140,8 +140,8 @@ def plot():
     plt.close(fig)
 
 def adapt_image(image):
-    padded_img = np.zeros((299,299,3))
-    padded_img[:image.shape[0],:,:] = image
+    padded_img = np.zeros((image.shape[0],299,299,3))
+    padded_img[:,:image.shape[1],:,:] = image
     return padded_img
 
 for epochs in range(1):
@@ -150,7 +150,7 @@ for epochs in range(1):
         try:
             batchImg, batchLabel = next(iteratorTr)
             with tf.device('/GPU:' + args.gpu_selected):
-                [loss, accuracy] = model.keras_layer.train_on_batch(adapt_image(batchImg), batchLabel)
+                [loss, accuracy] = model.train_on_batch(adapt_image(batchImg), batchLabel)
             liste_lossTr.append(loss)
             liste_accuracyTr.append(accuracy)
             Lcoordx_tr.append(compteur)
@@ -158,7 +158,7 @@ for epochs in range(1):
             if compteur % accur_step == 0:
                 batchImg, batchLabel = next(iteratorValid)
                 with tf.device('/GPU:' + args.gpu_selected):
-                    [loss, accuracy] = model.keras_layer.test_on_batch(adapt_image(batchImg), batchLabel)
+                    [loss, accuracy] = model.test_on_batch(adapt_image(batchImg), batchLabel)
                 liste_lossValid.append(loss)
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
