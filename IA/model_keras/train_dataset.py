@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 
+
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
@@ -9,6 +10,7 @@ print("/".join(chemin_fichier[:-2] + ["improved_graph"]))
 sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers"]))
 from IA.model_keras.data.generate_data import Nuscene_dataset
 from IA.model_keras.model.model_orig import make_model
+from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
 from IA.model_keras.model.model_inception_top import make_model as make_model_inception_top
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,6 +18,7 @@ import tensorflow as tf
 import matplotlib
 from tensorflow.keras.optimizers import Adam,SGD
 from tensorflow.keras.metrics import categorical_accuracy
+from IA.model_keras.parser import parse
 
 # faire le padding des images
 matplotlib.use('Agg')
@@ -29,31 +32,7 @@ for device in physical_devices:
         # Invalid device or cannot modify virtual devices once initialized.
         pass
 
-parser = argparse.ArgumentParser()
-
-parser.add_argument('-bs', dest='batch_size', default=10, type=int,
-                    help="[Optionnel] Indique le nombre d'images par batch")
-parser.add_argument('-gpu', dest='gpu_selected', default="0", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-img_w', dest='image_width', default=400, type=int,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-lr', dest='lr', default=1e-3, type=float,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-eps', dest='epsilon', default=1e-7, type=float,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-lastAct', dest='lastActivation', default="linear", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-approxAccur', dest='approximationAccuracy', default="none", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-nbMod', dest='nb_modules', default=4, type=int,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-redLayer', dest='reduction_layer', default="globalavgpool", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-dptRate', dest='dropout_rate', default="0.5", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-opti', dest='optimizer', default="adam", type=str,
-                    help="[Optionnel] Optimisateur")
-args = parser.parse_args()
+parse()
 
 dataset = Nuscene_dataset(img_width=args.image_width)
 dataset.batch_size = args.batch_size
@@ -115,7 +94,7 @@ class FolderInfos:
 
 
 FolderInfos.init()
-model.save(FolderInfos.base_filename + "_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s_graph.dot"
+plot_model(model,output_path=FolderInfos.base_filename + "_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s_graph.dot"
            % (dataset.batch_size, args.lastActivation, args.approximationAccuracy,
               args.nb_modules, args.dropout_rate, args.reduction_layer))
 iteratorValid = dataset.getNextBatchValid()
