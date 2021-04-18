@@ -77,20 +77,9 @@ with tf.device('/GPU:' + args.gpu_selected):
         raise Exception("Optimizer %s not supported" % args.optimizer)
     model.compile(optimizer=optimizer, loss="MSE",
                               metrics=[approx_accuracy(args.approximationAccuracy)])
-from time import strftime, gmtime
-import os
 
 
-class FolderInfos:
-    base_folder = None
-    base_filename = None
-
-    @staticmethod
-    def init():
-        id = strftime("%Y-%m-%d_%Hh%Mmin%Ss", gmtime())
-        FolderInfos.base_folder = "/".join(os.path.realpath(__file__).split("/")[:-3] + ["data/"]) + id + "/"
-        FolderInfos.base_filename = FolderInfos.base_folder + id
-        os.mkdir(FolderInfos.base_folder)
+from IA.model_keras.FolderInfos import FolderInfos
 
 
 FolderInfos.init()
@@ -145,7 +134,7 @@ for epochs in range(1):
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
                 plot()
-            if compteur == 1080:
+            if compteur == 100:
                 break
         except StopIteration:
             print("Epoch %d done" % epochs)
