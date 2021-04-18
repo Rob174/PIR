@@ -32,7 +32,7 @@ for device in physical_devices:
         # Invalid device or cannot modify virtual devices once initialized.
         pass
 
-parse()
+args = parse()
 
 dataset = Nuscene_dataset(img_width=args.image_width)
 dataset.batch_size = args.batch_size
