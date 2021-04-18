@@ -3,11 +3,9 @@
 # Press Maj+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
-from IA.improved_graph.src.layers.base_layers import Input, Conv2D, BatchNormalization, Activation, SeparableConv2D, \
-    MaxPooling2D, Add, GlobalAveragePooling2D, Dropout, Dense, Flatten
+from tensorflow.keras.layers import Dense,Conv2D,GlobalAveragePooling2D,Input,BatchNormalization,Activation,SeparableConv2D,Add,MaxPooling2D,Dropout,Flatten
 import tensorflow as tf
-
-from IA.improved_graph.src.layers.node_model import *
+from tensorflow.keras import Model
 import tensorflow.keras.regularizers as regularizers
 
 '''cette fonction permet de créer le modéle(architecture de l'IA)'''

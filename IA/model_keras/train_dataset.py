@@ -75,7 +75,7 @@ with tf.device('/GPU:' + args.gpu_selected):
         optimizer = SGD( learning_rate=0.045, momentum=0.9, nesterov=False)
     else:
         raise Exception("Optimizer %s not supported" % args.optimizer)
-    model.keras_layer.compile(optimizer=optimizer, loss="MSE",
+    model.compile(optimizer=optimizer, loss="MSE",
                               metrics=[approx_accuracy(args.approximationAccuracy)])
 from time import strftime, gmtime
 import os
@@ -103,11 +103,12 @@ compteur = 0
 
 def plot():
     fig, axe_error = plt.subplots()
-    loss_axe = axe_error.twinx()
+    loss_axe: plt.axis = axe_error.twinx()
     loss_axe.plot(
         np.array(Lcoordx_tr) * dataset.batch_size,
         liste_lossTr, color="r", label="lossTr")
     loss_axe.plot(np.array(Lcoordx_valid) * dataset.batch_size, liste_lossValid, color="orange", label="lossValid")
+    loss_axe.set_yscale("log")
     axe_error.plot(np.array(Lcoordx_tr) * dataset.batch_size, 100 * (1 - np.array(liste_accuracyTr)), color="g",
                    label="tr_error")
     axe_error.plot(np.array(Lcoordx_valid) * dataset.batch_size, 100 * (1 - np.array(liste_accuracyValid)), color="b",
@@ -131,7 +132,7 @@ for epochs in range(1):
         try:
             batchImg, batchLabel = next(iteratorTr)
             with tf.device('/GPU:' + args.gpu_selected):
-                [loss, accuracy] = model.keras_layer.train_on_batch(batchImg, batchLabel)
+                [loss, accuracy] = model.train_on_batch(batchImg, batchLabel)
             liste_lossTr.append(loss)
             liste_accuracyTr.append(accuracy)
             Lcoordx_tr.append(compteur)
@@ -139,7 +140,7 @@ for epochs in range(1):
             if compteur % accur_step == 0:
                 batchImg, batchLabel = next(iteratorValid)
                 with tf.device('/GPU:' + args.gpu_selected):
-                    [loss, accuracy] = model.keras_layer.test_on_batch(batchImg, batchLabel)
+                    [loss, accuracy] = model.test_on_batch(batchImg, batchLabel)
                 liste_lossValid.append(loss)
                 liste_accuracyValid.append(accuracy)
                 Lcoordx_valid.append(compteur)
