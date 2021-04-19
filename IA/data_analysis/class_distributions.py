@@ -1,3 +1,12 @@
+import os
+import sys
+
+
+chemin_fichier = os.path.realpath(__file__).split("/")
+sys.path.append("/".join(chemin_fichier[:-2]))
+sys.path.append("/".join(chemin_fichier[:-3]))
+
+
 from IA.model_keras.data.generate_data import Nuscene_dataset
 import json
 from IA.model_keras.FolderInfos import FolderInfos
@@ -12,7 +21,10 @@ def add_stat(batch_label):
     global dico_eff
     for batch_index in range(batch_label.shape[0]):
         for classe_index in range(batch_label.shape[1]):
-            dico_eff[str(classe_index)][str(batch_label[batch_index, classe_index])] += 1
+            key = str(batch_label[batch_index, classe_index])
+            if key not in dico_eff[str(classe_index)].keys():
+                dico_eff[str(classe_index)][key] = 0
+            dico_eff[str(classe_index)][key] += 1
 
 
 batchImg, batchLabel = next(iteratorTr)

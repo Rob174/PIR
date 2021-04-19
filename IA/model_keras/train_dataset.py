@@ -1,7 +1,7 @@
-import argparse
 import os
 import sys
 
+from model_keras.callbacks.EvalCallback import EvalCallback
 
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
@@ -90,52 +90,14 @@ iteratorValid = dataset.getNextBatchValid()
 compteur = 0
 
 
-def plot():
-    fig, axe_error = plt.subplots()
-    loss_axe: plt.axis = axe_error.twinx()
-    loss_axe.plot(
-        np.array(Lcoordx_tr) * dataset.batch_size,
-        liste_lossTr, color="r", label="lossTr")
-    loss_axe.plot(np.array(Lcoordx_valid) * dataset.batch_size, liste_lossValid, color="orange", label="lossValid")
-    loss_axe.set_yscale("log")
-    axe_error.plot(np.array(Lcoordx_tr) * dataset.batch_size, 100 * (1 - np.array(liste_accuracyTr)), color="g",
-                   label="tr_error")
-    axe_error.plot(np.array(Lcoordx_valid) * dataset.batch_size, 100 * (1 - np.array(liste_accuracyValid)), color="b",
-                   label="valid_error")
-    axe_error.set_xlabel("Nombre d'itérations, d'images passées")
-    axe_error.set_ylabel("Error (%)")
-    loss_axe.set_ylabel("Loss (MSE)")
-    fig.legend()
-    plt.grid()
-    plt.savefig(
-        FolderInfos.base_filename + "erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s.png"
-        % (dataset.batch_size, args.lastActivation, args.approximationAccuracy, args.nb_modules,
-           args.dropout_rate, args.reduction_layer))
-    plt.clf()
-    plt.close(fig)
+dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,output_types=(tf.float32,tf.float32))\
+                    .prefetch(tf.data.experimental.AUTOTUNE)
+dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid,output_types=(tf.float32,tf.float32))\
+                    .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
-
-for epochs in range(1):
-    iteratorTr = dataset.getNextBatchTr()
-    while True:
-        try:
-            batchImg, batchLabel = next(iteratorTr)
-            with tf.device('/GPU:' + args.gpu_selected):
-                [loss, accuracy] = model.train_on_batch(batchImg, batchLabel)
-            liste_lossTr.append(loss)
-            liste_accuracyTr.append(accuracy)
-            Lcoordx_tr.append(compteur)
-            compteur = compteur + 1
-            if compteur % accur_step == 0:
-                batchImg, batchLabel = next(iteratorValid)
-                with tf.device('/GPU:' + args.gpu_selected):
-                    [loss, accuracy] = model.test_on_batch(batchImg, batchLabel)
-                liste_lossValid.append(loss)
-                liste_accuracyValid.append(accuracy)
-                Lcoordx_valid.append(compteur)
-                plot()
-            if compteur == 100:
-                break
-        except StopIteration:
-            print("Epoch %d done" % epochs)
-            break
+tb_callback = tf.keras.callbacks.TensorBoard(FolderInfos.base_folder)
+model.fit(dataset_tr,callbacks=[
+    EvalCallback(tb_callback,dataset_valid,dataset.batch_size,["loss_MSE","prct_error"],type="tr"),
+    EvalCallback(tb_callback,dataset_valid,dataset.batch_size,["loss_MSE","prct_error"],type="valid",
+                 eval_rate=dataset.batch_size*4)
+])
