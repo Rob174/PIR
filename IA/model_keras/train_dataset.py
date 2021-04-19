@@ -101,13 +101,13 @@ dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid, output
                                                tf.TensorShape([None, None, None, None]), tf.TensorShape([None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
-path_weights = "/".join(FolderInfos.base_folder.split("/")[:-1])\
-               +"2021-04-19_12h06min43s_class_distribution_nuscene/"\
+path_weights = "/".join(FolderInfos.base_folder.split("/")[:-2])\
+               +"/2021-04-19_12h06min43s_class_distribution_nuscene/"\
                +"2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
 with open(path_weights,"r") as fp:
     nb_bb_per_class = json.load(fp)
     total = sum(nb_bb_per_class.values())
-    weights = {str(Nuscene_dataset.correspondances_classes[k]):float(v/total) for k,v in nb_bb_per_class.items()}
+    weights = {Nuscene_dataset.correspondances_classes[k]:float(v/total) for k,v in nb_bb_per_class.items()}
 with tf.device('/GPU:' + args.gpu_selected):
     model.fit(dataset_tr, callbacks=[
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
