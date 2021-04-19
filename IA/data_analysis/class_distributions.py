@@ -1,52 +1,28 @@
 import os
 import sys
 
-
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
-
 
 from IA.model_keras.data.generate_data import Nuscene_dataset
 import json
 from IA.model_keras.FolderInfos import FolderInfos
 
-dataset = Nuscene_dataset()
+with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", "r") as fp:
+    file = json.load(fp)
 
-iteratorTr = dataset.getNextBatchTr()
-iteratorValid = dataset.getNextBatchValid()
+dico_eff = {k: {} for k in Nuscene_dataset.correspondances_classes.keys()}
 
-
-def add_stat(batch_label):
-    global dico_eff
-    for batch_index in range(batch_label.shape[0]):
-        for classe_index in range(batch_label.shape[1]):
-            key = str(batch_label[batch_index, classe_index])
-            if key not in dico_eff[str(classe_index)].keys():
-                dico_eff[str(classe_index)][key] = 0
-            dico_eff[str(classe_index)][key] += 1
-
-
-batchImg, batchLabel = next(iteratorTr)
-dico_eff = {str(i): {} for i in range(batchLabel.shape[1])}
-add_stat(batchLabel)
-
-while True:
-    try:
-        batchImg, batchLabel = next(iteratorTr)
-        add_stat(batchLabel)
-    except StopIteration:
-        print("Tr dataset ok")
-        break
-
-while True:
-    try:
-        batchImg, batchLabel = next(iteratorValid)
-        add_stat(batchLabel)
-    except StopIteration:
-        print("Valid dataset ok")
-        break
+for img_dico in file:
+    dico_categorie_image = img_dico["categories"]
+    nb_boundingbox = 0
+    for classe, v in dico_categorie_image.items():
+        nb_obj = str(len(v))
+        if nb_obj not in dico_eff[classe].keys():
+            dico_eff[classe][nb_obj] = 0
+        dico_eff[classe][nb_obj] += 1
 
 FolderInfos.init(custom_name="class_distribution_nuscene")
-with open(FolderInfos.base_filename+"statistics.json","w") as fp:
-    json.dump(dico_eff,fp)
+with open(FolderInfos.base_filename + "statistics.json", "w") as fp:
+    json.dump(dico_eff, fp,indent=4)

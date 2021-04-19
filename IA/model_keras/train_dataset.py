@@ -11,17 +11,12 @@ sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers
 from IA.model_keras.data.generate_data import Nuscene_dataset
 from IA.model_keras.model.model_orig import make_model
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
-from IA.model_keras.model.model_inception_top import make_model as make_model_inception_top
-import matplotlib.pyplot as plt
-import numpy as np
 import tensorflow as tf
-import matplotlib
-from tensorflow.keras.optimizers import Adam,SGD
+from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.metrics import categorical_accuracy
 from IA.model_keras.parser import parse
+from IA.model_keras.markdown_summary.markdown_summary import create_summary
 
-# faire le padding des images
-matplotlib.use('Agg')
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -36,14 +31,6 @@ args = parse()
 
 dataset = Nuscene_dataset(img_width=args.image_width)
 dataset.batch_size = args.batch_size
-liste_lossTr = []
-liste_accuracyTr = []
-liste_lossValid = []
-liste_accuracyValid = []
-Lcoordx_tr = []
-Lcoordx_valid = []
-
-accur_step = 5
 
 
 def approx_accuracy(modeApprox="none"):
@@ -65,39 +52,52 @@ def approx_accuracy(modeApprox="none"):
 
 with tf.device('/GPU:' + args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
-                     num_classes=len(dataset.correspondances_classes.keys()),
-                     last_activation=args.lastActivation,
-                     nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
-                     dropout_rate=float(args.dropout_rate))
+                       num_classes=len(dataset.correspondances_classes.keys()),
+                       last_activation=args.lastActivation,
+                       nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
+                       dropout_rate=float(args.dropout_rate))
     if args.optimizer == "adam":
+        optimizer_params = {"learning_rate": args.lr, "epsilon": args.epsilon}
         optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)
     elif args.optimizer == "sgd":
-        optimizer = SGD( learning_rate=0.045, momentum=0.9, nesterov=False)
+        optimizer_params = {"learning_rate": args.lr}
+        optimizer = SGD(learning_rate=0.045, momentum=0.9, nesterov=False)
     else:
         raise Exception("Optimizer %s not supported" % args.optimizer)
     model.compile(optimizer=optimizer, loss="MSE",
-                              metrics=[approx_accuracy(args.approximationAccuracy)])
-
+                  metrics=[approx_accuracy(args.approximationAccuracy)])
 
 from IA.model_keras.FolderInfos import FolderInfos
 
-
 FolderInfos.init()
-plot_model(model,output_path=FolderInfos.base_filename + "_bs_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s_graph.dot"
-           % (dataset.batch_size, args.lastActivation, args.approximationAccuracy,
-              args.nb_modules, args.dropout_rate, args.reduction_layer))
-iteratorValid = dataset.getNextBatchValid()
-compteur = 0
+plot_model(model, output_path=FolderInfos.base_filename + "model.dot")
 
-
-dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,output_types=(tf.float32,tf.float32))\
-                    .prefetch(tf.data.experimental.AUTOTUNE)
-dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid,output_types=(tf.float32,tf.float32))\
-                    .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
 tb_callback = tf.keras.callbacks.TensorBoard(FolderInfos.base_folder)
-model.fit(dataset_tr,callbacks=[
-    EvalCallback(tb_callback,dataset_valid,dataset.batch_size,["loss_MSE","prct_error"],type="tr"),
-    EvalCallback(tb_callback,dataset_valid,dataset.batch_size,["loss_MSE","prct_error"],type="valid",
-                 eval_rate=dataset.batch_size*4)
-])
+
+## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
+create_summary(tb_callback.writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
+                                                                             f" prediction en appliquant la fonction" +
+                                                                             f" {args.approximationAccuracy} " +
+                                                                             f"(none = identity) aux prédictions" +
+                                                                             f" au préalable"],
+               but_essai="Test du framework", informations_additionnelles="",
+               model_img_path=FolderInfos.base_filename + "model.png")
+
+
+dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32)) \
+    .prefetch(tf.data.experimental.AUTOTUNE)
+dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32)) \
+    .prefetch(tf.data.experimental.AUTOTUNE)
+dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid, output_types=(tf.float32, tf.float32)) \
+    .prefetch(tf.data.experimental.AUTOTUNE).repeat()
+
+with tf.device('/GPU:' + args.gpu_selected):
+    model.fit(dataset_tr, callbacks=[
+        EvalCallback(tb_callback, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
+        EvalCallback(tb_callback, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
+                     eval_rate=dataset.batch_size * 5)
+    ])
+
+
+
