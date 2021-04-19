@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -17,6 +18,7 @@ from tensorflow.keras.metrics import categorical_accuracy
 from IA.model_keras.parser import parse
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
+
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -82,7 +84,8 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f" {args.approximationAccuracy} " +
                                                                       f"(none = identity) aux prédictions" +
                                                                       f" au préalable"],
-               but_essai="Test du framework", informations_additionnelles="",
+               but_essai="Entrainement avec class_weights", informations_additionnelles="class_weights calculé suivant"\
+               +"la formule : nb_bounding_box_classe_i/total_nb_bounding_box",
                model_img_path="/".join(["."]+(FolderInfos.base_filename + "model.png").split("/")[-1:]),id=FolderInfos.id)
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
@@ -98,9 +101,16 @@ dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid, output
                                                tf.TensorShape([None, None, None, None]), tf.TensorShape([None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
+path_weights = "/".join(FolderInfos.base_folder.split("/")[:-1])\
+               +"2021-04-19_12h06min43s_class_distribution_nuscene/"\
+               +"2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
+with open(path_weights,"r") as fp:
+    nb_bb_per_class = json.load(fp)
+    total = sum(nb_bb_per_class.values())
+    weights = {str(Nuscene_dataset.correspondances_classes[k]):float(v/total) for k,v in nb_bb_per_class.items()}
 with tf.device('/GPU:' + args.gpu_selected):
     model.fit(dataset_tr, callbacks=[
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
                      eval_rate=dataset.batch_size * 5)
-    ])
+    ],class_weight=weights)
