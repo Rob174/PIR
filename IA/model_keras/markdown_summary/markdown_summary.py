@@ -6,8 +6,8 @@ import  tensorflow as tf
 
 def create_summary(writer: tf.summary.SummaryWriter,optimizer_name: str,optimizer_parameters: Dict,
                    loss: str,metriques_utilisees: List[str],
-                   but_essai: str,informations_additionnelles: str, model_img_path: str):
-    markdown = f"""# Résumé de l'entrainement du {FolderInfos.id}]
+                   but_essai: str,informations_additionnelles: str, model_img_path: str, id: str):
+    markdown = f"""# Résumé de l'entrainement du {id}
 
 ## Paramètres d'entrainement
 

@@ -29,7 +29,7 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=100)
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=100000)
 dataset.batch_size = args.batch_size
 
 
@@ -83,7 +83,7 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f"(none = identity) aux prédictions" +
                                                                       f" au préalable"],
                but_essai="Test du framework", informations_additionnelles="",
-               model_img_path=FolderInfos.base_filename + "model.png")
+               model_img_path="/".join(["."]+(FolderInfos.base_filename + "model.png").split("/")[-1:]),id=FolderInfos.id)
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
                                             output_shapes=(
