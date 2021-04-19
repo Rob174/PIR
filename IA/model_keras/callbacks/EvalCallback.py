@@ -7,6 +7,7 @@ class EvalCallback(tf.keras.callbacks.Callback):
 
     def __init__(self, writer: tf.summary.SummaryWriter, dataset: tf.data.Dataset, batch_size: int,
                  metrics_name: List[str], eval_rate: int = None, type: str = "tr"):
+        super().__init__()
         self.writer = writer
         self.step_number = 0
         self.dataset = dataset
@@ -28,7 +29,7 @@ class EvalCallback(tf.keras.callbacks.Callback):
             items_to_write = {}
 
             for metric, metric_value in zip(self.metrics_names, test_output):
-                items_to_write[metric] = metric_value
+                items_to_write[metric] = 100*(1.-metric_value)
 
             with self.writer.as_default():
                 for name, value in items_to_write.items():

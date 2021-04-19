@@ -29,7 +29,7 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=100000)
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=1080)
 dataset.batch_size = args.batch_size
 
 
