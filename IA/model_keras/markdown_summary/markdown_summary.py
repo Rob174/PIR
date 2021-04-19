@@ -21,9 +21,9 @@ Métriques : """
     markdown += f"""\n## Description de l'essai\n\n{but_essai}\n\n{informations_additionnelles}"""
 
     markdown += f"\n\n## Architecture du modèle\n\n![Modele]({model_img_path}"
+    with writer.as_default():
+        tf.summary.text("Resume", markdown, step=0)
+        writer.flush()
 
-    summary = tf.summary.text("Resume", markdown, step=0)
-    writer.add_summary(summary,0)
-    writer.flush()
 
 

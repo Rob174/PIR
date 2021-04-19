@@ -1,22 +1,22 @@
 import os
 import sys
 
-from model_keras.callbacks.EvalCallback import EvalCallback
-
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
 print("/".join(chemin_fichier[:-2] + ["improved_graph"]))
 sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers"]))
+
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam, SGD
+
 from IA.model_keras.data.generate_data import Nuscene_dataset
 from IA.model_keras.model.model_orig import make_model
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
-import tensorflow as tf
-from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.metrics import categorical_accuracy
 from IA.model_keras.parser import parse
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
-
+from IA.model_keras.callbacks.EvalCallback import EvalCallback
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -29,7 +29,7 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width)
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=100)
 dataset.batch_size = args.batch_size
 
 
@@ -72,32 +72,35 @@ from IA.model_keras.FolderInfos import FolderInfos
 FolderInfos.init()
 plot_model(model, output_path=FolderInfos.base_filename + "model.dot")
 
-
-tb_callback = tf.keras.callbacks.TensorBoard(FolderInfos.base_folder)
+logdir = FolderInfos.base_folder
+file_writer = tf.summary.create_file_writer(logdir)
+file_writer.set_as_default()
 
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
-create_summary(tb_callback.writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
-                                                                             f" prediction en appliquant la fonction" +
-                                                                             f" {args.approximationAccuracy} " +
-                                                                             f"(none = identity) aux prédictions" +
-                                                                             f" au préalable"],
+create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
+                                                                      f" prediction en appliquant la fonction" +
+                                                                      f" {args.approximationAccuracy} " +
+                                                                      f"(none = identity) aux prédictions" +
+                                                                      f" au préalable"],
                but_essai="Test du framework", informations_additionnelles="",
                model_img_path=FolderInfos.base_filename + "model.png")
 
-
-dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32)) \
+dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
+                                            output_shapes=(
+                                            tf.TensorShape([None, None, None, None]), tf.TensorShape([None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE)
-dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32)) \
+dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
+                                                 output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                                tf.TensorShape([None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE)
-dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid, output_types=(tf.float32, tf.float32)) \
+dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid, output_types=(tf.float32, tf.float32),
+                                               output_shapes=(
+                                               tf.TensorShape([None, None, None, None]), tf.TensorShape([None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
 with tf.device('/GPU:' + args.gpu_selected):
     model.fit(dataset_tr, callbacks=[
-        EvalCallback(tb_callback, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
-        EvalCallback(tb_callback, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
+        EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
+        EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
                      eval_rate=dataset.batch_size * 5)
     ])
-
-
-
