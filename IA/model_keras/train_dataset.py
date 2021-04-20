@@ -31,7 +31,7 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=1080)
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=100)
 dataset.batch_size = args.batch_size
 
 
@@ -51,6 +51,8 @@ def approx_accuracy(modeApprox="none"):
 
     return approx_accuracy_round
 
+def loss_mse(y_true,y_pred):
+    return tf.math.reduce_mean(tf.pow(y_true-y_pred,2))
 
 with tf.device('/GPU:' + args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
@@ -66,7 +68,7 @@ with tf.device('/GPU:' + args.gpu_selected):
         optimizer = SGD(learning_rate=0.045, momentum=0.9, nesterov=False)
     else:
         raise Exception("Optimizer %s not supported" % args.optimizer)
-    model.compile(optimizer=optimizer, loss="MSE",
+    model.compile(optimizer=optimizer, loss=loss_mse,
                   metrics=[approx_accuracy(args.approximationAccuracy)])
 
 from IA.model_keras.FolderInfos import FolderInfos
@@ -84,9 +86,8 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f" {args.approximationAccuracy} " +
                                                                       f"(none = identity) aux prédictions" +
                                                                       f" au préalable"],
-               but_essai="Entrainement avec class_weights", informations_additionnelles="class_weights calculé suivant"\
-               +"la formule : nb_bounding_box_classe_i/total_nb_bounding_box",
-               model_img_path="/".join(["."]+(FolderInfos.base_filename + "model.png").split("/")[-1:]),id=FolderInfos.id)
+               but_essai="Test framework", informations_additionnelles="class_weights calculé suivant"\
+               +"la formule : nb_bounding_box_classe_i/total_nb_bounding_box",id=FolderInfos.id)
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
                                             output_shapes=(
@@ -113,4 +114,4 @@ with tf.device('/GPU:' + args.gpu_selected):
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
                      eval_rate=dataset.batch_size * 5)
-    ],class_weight=weights)
+    ])#,class_weight=weights)

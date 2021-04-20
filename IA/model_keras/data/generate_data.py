@@ -69,7 +69,6 @@ class Nuscene_dataset:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
                 yield batches
-
     def getNextBatchValid(self):
         bufferLabel, bufferImg = [], []
         index_imgs = list(range(len(self.dataset_valid)))
