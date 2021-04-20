@@ -28,5 +28,9 @@ def parse():
                         help="[Optionnel] Optimisateur")
     parser.add_argument('-classWeigths', dest='classes_weights', default="false", type=str,
                         help="[Optionnel] Type de pondération des classes sous-représentées")
+    parser.add_argument('-nbImg', dest='nb_images', default=1080, type=int,
+                        help="[Optionnel] Indique le nb d'imgs passées en entrainement avant l'arrêt")
+    parser.add_argument('-tailleMini', dest='taille_mini_obj_px', default=10, type=int,
+                        help="[Optionnel] Indique la taille minimale des objets que doit détecter le réseau (après redimensionnement)")
     args = parser.parse_args()
     return args

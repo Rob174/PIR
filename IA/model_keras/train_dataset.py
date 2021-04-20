@@ -31,7 +31,7 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=1080)
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px)
 dataset.batch_size = args.batch_size
 
 
@@ -81,6 +81,8 @@ file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
 texte_additionnel = "Utilisation de class_weights pour l'entrainement avec les poids par classe"
+informations_additionnelles = "Utilisation d'une métrique custom pour corriger cela\n"+ "Normalisation des images par 255 avant passage dans le réseau"
+informations_additionnelles += f"Garde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
 create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
                                                                       f" prediction en appliquant la fonction" +
@@ -89,8 +91,8 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f" au préalable"],
                but_essai="Correction des essais SGD et Adam : avec MSE la loss était négative ce qui est contradictoire" + \
                          " avec définition. ",
-               informations_additionnelles="Utilisation d'une métrique custom pour corriger cela\n"+
-                                           texte_additionnel if args.classes_weights != "false" else "",id=FolderInfos.id)
+               informations_additionnelles=informations_additionnelles+texte_additionnel if args.classes_weights != "false" else informations_additionnelles,
+               id=FolderInfos.id)
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
                                             output_shapes=(

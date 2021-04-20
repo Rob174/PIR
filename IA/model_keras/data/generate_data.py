@@ -29,7 +29,7 @@ class Nuscene_dataset:
                 "vehicle.trailer": 21,
                 "vehicle.truck": 22
             }
-    def __init__(self,tr_prct: float =0.6,img_width: int =1600,limit_nb_tr: int =None):
+    def __init__(self,tr_prct: float =0.6,img_width: int =1600,limit_nb_tr: int =None,taille_mini_px=10):
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)
             self.dataset_tr = self.content_dataset[:int(len(self.content_dataset)*tr_prct)]
@@ -38,7 +38,9 @@ class Nuscene_dataset:
             # Récupère la taille des images
             self.root_dir= "/scratch/rmoine/PIR/nuscene/"
             width, height = Image.open(self.root_dir + self.content_dataset[0]["imageName"]).size # 1600x900
+            self.facteur_echelle = img_width/width
             self.image_shape = (img_width,int(img_width/width*height))
+            self.taille_mini_px = taille_mini_px
             print("shape : ",self.image_shape)
             if limit_nb_tr is not None:
                 self.limit_nb_tr = limit_nb_tr
@@ -49,14 +51,23 @@ class Nuscene_dataset:
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
         image = Image.open(path)
         image = image.resize(self.image_shape)
+        image = np.array(image) / 255.
         return image
 
     def getLabels(self, index_image):
         dico_categorie_image = self.content_dataset[index_image]["categories"]
-        nb_boundingbox = 0
         label = np.zeros((len(Nuscene_dataset.correspondances_classes.values())))
         for k, v in dico_categorie_image.items():
-            label[self.correspondances_classes[k]] += len(v)
+            for bounding_box_corners in v:
+                [coin1_x,coin1_y,coin2_x,coin2_y] = bounding_box_corners
+                coin1 = np.array([coin1_x,coin1_y]).T
+                coin2 = np.array([coin2_x,coin2_y]).T
+                ## Calcul des coordonnées après redimensionnement
+                matrice_scale_down = np.array([[self.facteur_echelle,0],[0,self.facteur_echelle]])
+                coin1_transfo = matrice_scale_down.dot(coin1)
+                coin2_transfo = matrice_scale_down.dot(coin2)
+                if abs(coin1_transfo[0] - coin2_transfo[0]) > self.taille_mini_px and abs(coin1_transfo[1] - coin2_transfo[1]) > self.taille_mini_px:
+                    label[self.correspondances_classes[k]] += 1
         return label
     def getNextBatchTr(self):
         bufferLabel, bufferImg = [], []
