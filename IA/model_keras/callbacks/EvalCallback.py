@@ -27,9 +27,11 @@ class EvalCallback(tf.keras.callbacks.Callback):
             test_output = self.model.test_on_batch(batch_imgs, batch_labels)
 
             items_to_write = {}
-
-            for metric, metric_value in zip(self.metrics_names, test_output):
-                items_to_write[metric] = 100*(1.-metric_value)
+            for i,[metric, metric_value] in enumerate(zip(self.metrics_names, test_output)):
+                if i > 0:
+                    items_to_write[metric] = 100*(1.-metric_value)
+                else:
+                    items_to_write[metric] = metric_value
 
             with self.writer.as_default():
                 for name, value in items_to_write.items():
