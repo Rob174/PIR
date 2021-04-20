@@ -27,7 +27,7 @@ class Nuscene_dataset:
                 "vehicle.emergency.police": 19,
                 "vehicle.motorcycle": 20,
                 "vehicle.trailer": 21,
-                "vehicle.truck": 22
+                "vehicle.truck": 22 
             }
     def __init__(self,tr_prct: float =0.6,img_width: int =1600,limit_nb_tr: int =None,taille_mini_px=10):
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:

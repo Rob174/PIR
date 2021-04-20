@@ -92,7 +92,7 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                but_essai="Correction des essais SGD et Adam : avec MSE la loss était négative ce qui est contradictoire" + \
                          " avec définition. ",
                informations_additionnelles=informations_additionnelles+texte_additionnel if args.classes_weights != "false" else informations_additionnelles,
-               id=FolderInfos.id)
+               id=FolderInfos.id,dataset_name="Nuscene",taille_x_img_redim=dataset.image_shape[0],taille_y_img_redim=dataset.image_shape[1])
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
                                             output_shapes=(

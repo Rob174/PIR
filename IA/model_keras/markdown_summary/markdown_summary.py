@@ -6,8 +6,11 @@ import  tensorflow as tf
 
 def create_summary(writer: tf.summary.SummaryWriter,optimizer_name: str,optimizer_parameters: Dict,
                    loss: str,metriques_utilisees: List[str],
-                   but_essai: str,informations_additionnelles: str, id: str):
+                   but_essai: str,informations_additionnelles: str, id: str,dataset_name: str="",taille_x_img: int=1600,
+                   taille_y_img: int=900,taille_x_img_redim: int=400,taille_y_img_redim: int=225):
     markdown = f"""# Résumé de l'entrainement du {id}
+
+Entrainement sur {dataset_name} avec des images de taille {taille_x_img} px par {taille_y_img} px redimensionnées à {taille_x_img_redim} px x {taille_y_img_redim} px
 
 ## Paramètres d'entrainement
 
