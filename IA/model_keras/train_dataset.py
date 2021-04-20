@@ -31,7 +31,7 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=100)
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=1080)
 dataset.batch_size = args.batch_size
 
 
@@ -86,8 +86,9 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f" {args.approximationAccuracy} " +
                                                                       f"(none = identity) aux prédictions" +
                                                                       f" au préalable"],
-               but_essai="Test framework", informations_additionnelles="class_weights calculé suivant"\
-               +"la formule : nb_bounding_box_classe_i/total_nb_bounding_box",id=FolderInfos.id)
+               but_essai="Correction des essais SGD et Adam : avec MSE la loss était négative ce qui est contradictoire" + \
+                         " avec définition. ",
+               informations_additionnelles="Utilisation d'une métrique custom pour corriger cela",id=FolderInfos.id)
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
                                             output_shapes=(
@@ -105,13 +106,15 @@ dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid, output
 path_weights = "/".join(FolderInfos.base_folder.split("/")[:-2])\
                +"/2021-04-19_12h06min43s_class_distribution_nuscene/"\
                +"2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
-with open(path_weights,"r") as fp:
-    nb_bb_per_class = json.load(fp)
-    total = sum(nb_bb_per_class.values())
-    weights = {Nuscene_dataset.correspondances_classes[k]:float(v/total) for k,v in nb_bb_per_class.items()}
+weights = None
+if args.classes_weights != "false":
+    with open(path_weights,"r") as fp:
+        nb_bb_per_class = json.load(fp)
+        total = sum(nb_bb_per_class.values())
+        weights = {Nuscene_dataset.correspondances_classes[k]:float(v/total) for k,v in nb_bb_per_class.items()}
 with tf.device('/GPU:' + args.gpu_selected):
     model.fit(dataset_tr, callbacks=[
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
                      eval_rate=dataset.batch_size * 5)
-    ])#,class_weight=weights)
+    ],class_weight=weights)

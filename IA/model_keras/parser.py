@@ -26,5 +26,7 @@ def parse():
                         help="[Optionnel] Indique la gpu visible par le script tensorflow")
     parser.add_argument('-opti', dest='optimizer', default="adam", type=str,
                         help="[Optionnel] Optimisateur")
+    parser.add_argument('-classWeigths', dest='classes_weights', default="false", type=str,
+                        help="[Optionnel] Type de pondération des classes sous-représentées")
     args = parser.parse_args()
     return args
