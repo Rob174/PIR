@@ -80,6 +80,7 @@ logdir = FolderInfos.base_folder
 file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
+texte_additionnel = "Utilisation de class_weights pour l'entrainement avec les poids par classe"
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
 create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
                                                                       f" prediction en appliquant la fonction" +
@@ -88,7 +89,8 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f" au préalable"],
                but_essai="Correction des essais SGD et Adam : avec MSE la loss était négative ce qui est contradictoire" + \
                          " avec définition. ",
-               informations_additionnelles="Utilisation d'une métrique custom pour corriger cela",id=FolderInfos.id)
+               informations_additionnelles="Utilisation d'une métrique custom pour corriger cela\n"+
+                                           texte_additionnel if args.classes_weights != "false" else "",id=FolderInfos.id)
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
                                             output_shapes=(
