@@ -12,7 +12,7 @@ from IA.model_keras.FolderInfos import FolderInfos
 with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", "r") as fp:
     file = json.load(fp)
 
-liste_classes = Nuscene_dataset.correspondances_classes.keys()
+liste_classes = Nuscene_dataset.correspondances_classes_index.keys()
 dico_eff = {k: {} for k in liste_classes}
 
 for img_dico in file:

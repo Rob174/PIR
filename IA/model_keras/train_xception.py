@@ -111,7 +111,7 @@ with tf.device('/GPU:' + "2"):
     )
     input = Input(shape=(299,299,3))
     model_inception_cut = Model(inputs=model_xception.input,outputs=model_xception.get_layer("avg_pool").output)(input)
-    output = Dense(len(dataset.correspondances_classes.keys()))(model_inception_cut)
+    output = Dense(len(dataset.correspondances_classes_index.keys()))(model_inception_cut)
     model = Model(inputs=input,outputs=output)
     model.compile(optimizer=SGD(learning_rate=0.045, momentum=0.9, nesterov=False), loss=tf.keras.losses.cosine_similarity,
                   metrics=[approx_accuracy(args.approximationAccuracy)])

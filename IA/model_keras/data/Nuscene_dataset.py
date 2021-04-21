@@ -3,12 +3,16 @@ import random
 
 import numpy as np
 from PIL import Image
+import tensorflow as tf
 
 from model_keras.FolderInfos import FolderInfos
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 
 class Nuscene_dataset:
-    correspondances_classes = {
+    correspondances_classes_index = {
         "animal": 0,
         "human.pedestrian.adult": 1,
         "human.pedestrian.child": 2,
@@ -33,8 +37,9 @@ class Nuscene_dataset:
         "vehicle.trailer": 21,
         "vehicle.truck": 22
     }
+    correspondances_index_classes = None
 
-    def __init__(self, data_folder: str, tr_prct: float = 0.6, img_width: int = 1600, limit_nb_tr: int = None, taille_mini_px=10,
+    def __init__(self, data_folder: str, summary_writer, tr_prct: float = 0.6, img_width: int = 1600, limit_nb_tr: int = None, taille_mini_px=10,
                  with_weights="False", batch_size=10):
         """
 
@@ -53,10 +58,11 @@ class Nuscene_dataset:
                                              si il est rare que 100 chiens soit présents sur une image,
                                              si ce cas se présente on va diminuer la loss concernant le nombre de chiens
         """
+        Nuscene_dataset.correspondances_index_classes = {v:k for k,v in Nuscene_dataset.correspondances_classes_index.items()}
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)
-            self.dataset_tr = self.content_dataset[:int(len(self.content_dataset) * tr_prct)]
-            self.dataset_valid = self.content_dataset[int(len(self.content_dataset) * tr_prct):]
+            self.dataset_tr = list(range(0,int(len(self.content_dataset) * tr_prct)))
+            self.dataset_valid = list(range(int(len(self.content_dataset) * tr_prct),len(self.content_dataset)))
             self.batch_size = batch_size
             # Récupère la taille des images
             self.root_dir = "/scratch/rmoine/PIR/nuscene/"
@@ -68,14 +74,60 @@ class Nuscene_dataset:
                 self.limit_nb_tr = limit_nb_tr
             else:
                 self.limit_nb_tr = len(self.dataset_tr)
-            folder = data_folder + "/2021-04-21_17h21min29s_class_distribution_nuscene/"
-            path_stat_per_class_eff = folder + "2021-04-21_17h21min29s_class_distribution_nuscenestatistics.json"
-            path_stat_per_class = folder + "2021-04-21_17h21min29s_class_distribution_nuscenestatistics_per_class.json"
-            with open(path_stat_per_class, "r") as fp:
-                self.stat_per_class = json.load(fp)
-            with open(path_stat_per_class_eff, "r") as fp:
-                self.stat_per_class_eff = json.load(fp)
 
+            # Statistiques du dataset
+            self.stat_per_class_eff_tr = {classe:{} for classe in self.correspondances_classes_index.keys()}
+            self.stat_per_class_tr = {classe:0 for classe in self.correspondances_classes_index.keys()}
+            for index_img in self.dataset_tr:
+                label = self.getLabels(index_img)
+                for index_class in range(len(label)):
+                    self.stat_per_class_tr[self.correspondances_index_classes[index_class]] += label[index_class]
+                    effectif = str(int(label[index_class]))
+                    if effectif not in self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]].keys():
+                        self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] = 0
+                    self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] += 1
+
+            self.stat_per_class_eff_valid = {classe: {} for classe in self.correspondances_classes_index.keys()}
+            self.stat_per_class_valid = {classe: 0 for classe in self.correspondances_classes_index.keys()}
+            for index_img in self.dataset_valid:
+                label = self.getLabels(index_img)
+                for index_class in range(len(label)):
+                    self.stat_per_class_valid[self.correspondances_index_classes[index_class]] += label[index_class]
+                    effectif = str(int(label[index_class]))
+                    if effectif not in self.stat_per_class_eff_valid[
+                        self.correspondances_index_classes[index_class]].keys():
+                        self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] = 0
+                    self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] += 1
+
+            # Ploting distributions
+            with summary_writer.as_default():
+                for dico,name in zip([self.stat_per_class_eff_tr,self.stat_per_class_eff_valid],["training dataset","validation dataset"]):
+                    for classe, dico_classe in dico.items():
+                        range_min = min(map(int, dico_classe.keys()))
+                        range_max = max(map(int, dico_classe.keys()))
+                        vecteur_x = np.arange(range_min, range_max + 1)
+                        vecteur_bar = np.zeros((range_max - range_min + 1,))
+                        for effectif, nb_fois_vu in dico_classe.items():
+                            vecteur_bar[int(effectif) - range_min] = nb_fois_vu
+                        plt.clf()
+                        fig = plt.figure(figsize=(20, 10))
+                        fig.tight_layout(pad=0)
+                        ax = fig.add_subplot(111)
+                        ax.set_title(f"Statistiques label {classe} du {name}")
+                        ax.bar(vecteur_x, vecteur_bar, log=True)
+                        ax.set_xticks(vecteur_x)
+                        ax.set_xlabel("Nombre d'objets présents dans 1 image")
+                        ax.set_ylabel("Nombre de fois où cette situation se produit")
+                        # get image in numpy array (thanks to https://stackoverflow.com/questions/7821518/matplotlib-save-plot-to-numpy-array)
+                        fig.canvas.draw()
+                        data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+                        data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+                        data = np.stack((data,),axis=0)
+
+                        tf.summary.image(f"dataset_{name.split()[0]}_{classe}_stats",data,step=0)
+                        summary_writer.flush()
+                        plt.close()
+            print("--------------------------------------STAT DONE--------------------------------------------------")
             self.get_labels_fct = None
             if with_weights == "False":
                 self.get_labels_fct = self.getLabelsWithUnitWeight
@@ -105,7 +157,7 @@ class Nuscene_dataset:
         :return: np.array de shape (#nb_classes, ) contenant l'effectif d'apparition de chaque classe sur cette image
         """
         dico_categorie_image = self.content_dataset[index_image]["categories"]
-        label = np.zeros((len(Nuscene_dataset.correspondances_classes.values())))
+        label = np.zeros((len(Nuscene_dataset.correspondances_classes_index.values())))
         for k, v in dico_categorie_image.items():
             for bounding_box_corners in v:
                 [coin1_x, coin1_y, coin2_x, coin2_y] = bounding_box_corners
@@ -117,7 +169,7 @@ class Nuscene_dataset:
                 coin2_transfo = matrice_scale_down.dot(coin2)
                 if abs(coin1_transfo[0] - coin2_transfo[0]) > self.taille_mini_px and abs(
                         coin1_transfo[1] - coin2_transfo[1]) > self.taille_mini_px:
-                    label[self.correspondances_classes[k]] += 1
+                    label[self.correspondances_classes_index[k]] += 1
         return label
 
     def getLabelsWithUnitWeight(self, index_image):
@@ -130,7 +182,7 @@ class Nuscene_dataset:
         label = self.getLabels(index_image)
         return np.stack((label, np.ones(label.shape)), axis=0)
 
-    def getLabelsWithWeightsPerClass(self, index_image):
+    def getLabelsWithWeightsPerClass(self, index_image, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on pondère chaque classe par son pourcentage d'apparition dans le dataset pour donner plus de poids aux classes sous-représentées
@@ -139,15 +191,21 @@ class Nuscene_dataset:
         """
         label = self.getLabels(index_image)
         poids = np.zeros(label.shape)
+        if dataset == "tr":
+            dico_stat = self.stat_per_class_tr
+        elif dataset == "valid":
+            dico_stat = self.stat_per_class_valid
+        else:
+            raise Exception(f"getLabelsWithWeightsPerClass : dataset unrecognized : {dataset}")
         for i in range(len(label)):
-            nom_classe = [k for k, v in self.correspondances_classes.items() if v == i][0]
+            nom_classe = Nuscene_dataset.correspondances_index_classes[i]
             effectif = label[i]
-            poids[i] = self.stat_per_class[nom_classe] if effectif > 0 else 0
-        total = float(sum(v for v in self.stat_per_class.values()))
+            poids[i] = dico_stat[nom_classe] if effectif > 0 else 0
+        total = float(sum(v for v in dico_stat.values()))
         poids /= total
         return np.stack((label, poids), axis=0)
 
-    def getLabelsWithWeightsPerClassEff(self, index_image):
+    def getLabelsWithWeightsPerClassEff(self, index_image, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on pondère chaque classe par la fréquence de prédiction de cet effectif pour chaque classe :
@@ -159,10 +217,19 @@ class Nuscene_dataset:
         """
         label = self.getLabels(index_image)
         poids = np.zeros(label.shape)
+        if dataset == "tr":
+            dico_stat = self.stat_per_class_eff_tr
+        elif dataset == "valid":
+            dico_stat = self.stat_per_class_eff_valid
+        else:
+            raise Exception(f"getLabelsWithWeightsPerClass : dataset unrecognized : {dataset}")
         for i in range(len(label)):
-            nom_classe = [k for k, v in self.correspondances_classes.items() if v == i][0]
+            nom_classe = Nuscene_dataset.correspondances_index_classes[i]
             effectif = label[i]
-            poids[i] = self.stat_per_class_eff[nom_classe][str(int(effectif))]
+            try:
+                poids[i] = dico_stat[nom_classe][str(int(effectif))]
+            except:
+                raise Exception(f"Key {str(int(effectif))} not found in class {nom_classe} with {self.stat_per_class_eff[nom_classe]}")
         total = len(self.dataset_tr)
         poids /= total
         return np.stack((label, poids), axis=0)
@@ -176,11 +243,10 @@ class Nuscene_dataset:
                                                                 )
         """
         bufferLabel, bufferImg = [], []
-        index_imgs = list(range(len(self.dataset_tr)))
-        random.shuffle(index_imgs)
-        for i in range(min(self.limit_nb_tr, len(self.dataset_tr))):
+        random.shuffle(self.dataset_tr)
+        for i in self.dataset_tr[:self.limit_nb_tr]:
             bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.get_labels_fct(i))
+            bufferLabel.append(self.get_labels_fct(i,dataset="tr"))
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
@@ -195,12 +261,11 @@ class Nuscene_dataset:
                                                                 )
         """
         bufferLabel, bufferImg = [], []
-        index_imgs = list(range(len(self.dataset_valid)))
-        random.shuffle(index_imgs)
+        random.shuffle(self.dataset_valid)
         while True:
-            for i in range(len(self.dataset_valid)):
+            for i in self.dataset_valid:
                 bufferImg.append(self.getImage(i))
-                bufferLabel.append(self.get_labels_fct(i))
+                bufferLabel.append(self.get_labels_fct(i,dataset="valid"))
                 if len(bufferImg) % self.batch_size == 0 and i > 0:
                     batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                     bufferLabel, bufferImg = [], []

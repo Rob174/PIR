@@ -32,9 +32,16 @@ args = parse()
 
 FolderInfos.init()
 
+
+logdir = FolderInfos.base_folder
+file_writer = tf.summary.create_file_writer(logdir)
+file_writer.set_as_default()
+
+
 classes_weights = args.classes_weights
 dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
-                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder,with_weights=classes_weights)
+                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder,with_weights=classes_weights,
+                          summary_writer=file_writer)
 
 
 def approx_accuracy(modeApprox="none"):
@@ -49,7 +56,7 @@ def approx_accuracy(modeApprox="none"):
         raise Exception("Unknown approximation function %s" % modeApprox)
 
     def approx_accuracy_round(y_true, y_pred):
-        nb_classes = len(Nuscene_dataset.correspondances_classes.keys())
+        nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
         # Extraction des informations des tenseurs
         y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[1,dataset.batch_size,nb_classes])
         y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
@@ -62,7 +69,7 @@ def approx_accuracy(modeApprox="none"):
     return approx_accuracy_round
 
 def loss_mse(y_true,y_pred):
-    nb_classes = len(Nuscene_dataset.correspondances_classes.keys())
+    nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
     # Extraction des informations des tenseurs
     y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[1,dataset.batch_size,nb_classes])
     y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
@@ -77,7 +84,7 @@ def loss_mse(y_true,y_pred):
 
 with tf.device('/GPU:' + args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
-                       num_classes=len(dataset.correspondances_classes.keys()),
+                       num_classes=len(dataset.correspondances_classes_index.keys()),
                        last_activation=args.lastActivation,
                        nb_modules=args.nb_modules, reduction_layer=args.reduction_layer,
                        dropout_rate=float(args.dropout_rate))
@@ -93,10 +100,6 @@ with tf.device('/GPU:' + args.gpu_selected):
                   metrics=[approx_accuracy(args.approximationAccuracy)])
 
 plot_model(model, output_path=FolderInfos.base_filename + "model.dot")
-
-logdir = FolderInfos.base_folder
-file_writer = tf.summary.create_file_writer(logdir)
-file_writer.set_as_default()
 
 texte_poids_par_classe = "\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
 texte_poids_par_classe_eff= "\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
