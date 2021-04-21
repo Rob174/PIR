@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     with open("C:/Users/robin/Documents/projets/PIR/data/" +
-              "2021-04-19_12h06min43s_class_distribution_nuscene/" +
-              "2021-04-19_12h06min43s_class_distribution_nuscenestatistics.json") as fp:
+              "2021-04-21_17h21min29s_class_distribution_nuscene/" +
+              "2021-04-21_17h21min29s_class_distribution_nuscenestatistics.json") as fp:
         dico = json.load(fp)
 
-    folder_output = "C:/Users/robin/Documents/projets/PIR/data/2021-04-20_01h27min00_statistiques/2021-04-20_01h27min00"
+    folder_output = "C:/Users/robin/Documents/projets/PIR/data/2021-04-21_17h21min29s_class_distribution_nuscene/2021-04-21_17h21min29s"
 
     for classe,dico_classe in dico.items():
         range_min = min(map(int,dico_classe.keys()))
@@ -19,7 +19,9 @@ if __name__ == "__main__":
         for effectif,nb_fois_vu in dico_classe.items():
             vecteur_bar[int(effectif)-range_min] = nb_fois_vu
         plt.clf()
-        plt.bar(vecteur_x,vecteur_bar)
+        plt.figure(figsize=(20, 10))
+        plt.title(f"Statistiques label {classe}")
+        plt.bar(vecteur_x,vecteur_bar,log=True)
         plt.xticks(vecteur_x)
         plt.xlabel("Nombre d'objets présents dans 1 image")
         plt.ylabel("Nombre de fois où cette situation se produit")

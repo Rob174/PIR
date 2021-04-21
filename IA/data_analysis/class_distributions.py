@@ -31,3 +31,12 @@ for img_dico in file:
 FolderInfos.init(custom_name="class_distribution_nuscene")
 with open(FolderInfos.base_filename + "statistics.json", "w") as fp:
     json.dump(dico_eff, fp,indent=4)
+
+# Calcul des statistiques par classe
+dico_par_classe = {k:0 for k in dico_eff.keys()}
+for kclass,dico_ss_eff in dico_eff.items():
+    for keff,value in dico_ss_eff.items():
+        if keff != "0":
+            dico_par_classe[kclass] += value
+with open(FolderInfos.base_filename + "statistics_per_class.json", "w") as fp:
+    json.dump(dico_par_classe, fp,indent=4)

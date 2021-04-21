@@ -69,8 +69,9 @@ class Nuscene_dataset:
                 self.limit_nb_tr = limit_nb_tr
             else:
                 self.limit_nb_tr = len(self.dataset_tr)
-            path_stat_per_class_eff = data_folder + "/2021-04-19_12h06min43s_class_distribution_nuscene/2021-04-19_12h06min43s_class_distribution_nuscenestatistics.json"
-            path_stat_per_class = data_folder + "/2021-04-19_12h06min43s_class_distribution_nuscene/2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
+            folder = data_folder + "/2021-04-21_17h21min29s_class_distribution_nuscene/"
+            path_stat_per_class_eff = folder + "2021-04-21_17h21min29s_class_distribution_nuscenestatistics.json"
+            path_stat_per_class = folder + "2021-04-21_17h21min29s_class_distribution_nuscenestatistics_per_class.json"
             with open(path_stat_per_class, "r") as fp:
                 self.stat_per_class = json.load(fp)
             with open(path_stat_per_class_eff, "r") as fp:
