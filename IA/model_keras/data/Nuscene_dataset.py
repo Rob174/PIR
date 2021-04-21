@@ -64,7 +64,6 @@ class Nuscene_dataset:
             self.facteur_echelle = img_width / width
             self.image_shape = (img_width, int(img_width / width * height))
             self.taille_mini_px = taille_mini_px
-            print("shape : ", self.image_shape)
             if limit_nb_tr is not None:
                 self.limit_nb_tr = limit_nb_tr
             else:
@@ -163,7 +162,6 @@ class Nuscene_dataset:
         for i in range(len(label)):
             nom_classe = [k for k, v in self.correspondances_classes.items() if v == i][0]
             effectif = label[i]
-            print(nom_classe,":",self.stat_per_class_eff[nom_classe])
             poids[i] = self.stat_per_class_eff[nom_classe][str(int(effectif))]
         total = len(self.dataset_tr)
         poids /= total

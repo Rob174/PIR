@@ -5,7 +5,6 @@ import sys
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
-print("/".join(chemin_fichier[:-2] + ["improved_graph"]))
 sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers"]))
 
 import tensorflow as tf
@@ -24,7 +23,6 @@ from IA.model_keras.FolderInfos import FolderInfos
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     try:
-        print(device)
         tf.config.experimental.set_memory_growth(device, True)
     except:
         # Invalid device or cannot modify virtual devices once initialized.
