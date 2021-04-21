@@ -31,7 +31,7 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px)
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,batch_size=args.batch_size)
 dataset.batch_size = args.batch_size
 
 
@@ -52,7 +52,10 @@ def approx_accuracy(modeApprox="none"):
     return approx_accuracy_round
 
 def loss_mse(y_true,y_pred):
-    return tf.math.reduce_mean(tf.pow(y_true-y_pred,2))
+    y_true_label = tf.slice(y_true,[0,0,0],[dataset.batch_size,1,len(Nuscene_dataset.correspondances_classes.keys())])
+    y_true_poids = tf.slice(y_true, [0, 1, 0],
+                            [dataset.batch_size, 2, len(Nuscene_dataset.correspondances_classes.keys())])
+    return tf.math.reduce_mean(tf.pow(y_true_label-y_pred,2)*y_true_poids)
 
 with tf.device('/GPU:' + args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
@@ -80,9 +83,14 @@ logdir = FolderInfos.base_folder
 file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
-texte_additionnel = "Utilisation de class_weights pour l'entrainement avec les poids par classe"
-informations_additionnelles = "Utilisation d'une métrique custom pour corriger cela\n"+ "Normalisation des images par 255 avant passage dans le réseau"
+texte_poids_par_classe = "\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
+texte_poids_par_classe_eff= "\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
+informations_additionnelles = "\nUtilisation d'une métrique custom pour corriger cela\n"+ "Normalisation des images par 255 avant passage dans le réseau"
 informations_additionnelles += f"Garde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
+if args.classes_weights == "class":
+    informations_additionnelles += texte_poids_par_classe
+elif args.classes_weigths == "classEff":
+    informations_additionnelles += texte_poids_par_classe_eff
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
 create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
                                                                       f" prediction en appliquant la fonction" +
@@ -90,34 +98,44 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f"(none = identity) aux prédictions" +
                                                                       f" au préalable"],
                but_essai="Tester le modèle avec des images beaucoup plus petites",
-               informations_additionnelles=informations_additionnelles+texte_additionnel if args.classes_weights != "false" else informations_additionnelles,
-               id=FolderInfos.id,dataset_name="Nuscene",taille_x_img_redim=dataset.image_shape[0],taille_y_img_redim=dataset.image_shape[1])
+               informations_additionnelles=informations_additionnelles,
+               id=FolderInfos.id,dataset_name="Nuscene",taille_x_img_redim=dataset.image_shape[0],
+               taille_y_img_redim=dataset.image_shape[1])
 
-dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
-                                            output_shapes=(
-                                            tf.TensorShape([None, None, None, None]), tf.TensorShape([None, None]))) \
+tr_generator_fct = None
+valid_generator_fct = None
+
+if args.classes_weights == "class":
+    tr_generator_fct = lambda x: dataset.getNextBatchTr(with_weights="class")
+    valid_generator_fct = lambda x: dataset.getNextBatchValid(with_weights="class")
+elif args.classes_weigths == "classEff":
+    tr_generator_fct = lambda x: dataset.getNextBatchTr(with_weights="classEff")
+    valid_generator_fct = lambda x: dataset.getNextBatchValid(with_weights="classEff")
+
+
+dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
+                                            output_types=(tf.float32, tf.float32),
+                                            output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                           tf.TensorShape([None, None, None])))\
     .prefetch(tf.data.experimental.AUTOTUNE)
-dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr, output_types=(tf.float32, tf.float32),
+dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
+                                                 output_types=(tf.float32, tf.float32),
                                                  output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                                tf.TensorShape([None, None]))) \
+                                                                tf.TensorShape([None, None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE)
-dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid, output_types=(tf.float32, tf.float32),
-                                               output_shapes=(
-                                               tf.TensorShape([None, None, None, None]), tf.TensorShape([None, None]))) \
+dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid,
+                                               output_types=(tf.float32, tf.float32),
+                                               output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                              tf.TensorShape([None, None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
 path_weights = "/".join(FolderInfos.base_folder.split("/")[:-2])\
                +"/2021-04-19_12h06min43s_class_distribution_nuscene/"\
                +"2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
-weights = None
-if args.classes_weights != "false":
-    with open(path_weights,"r") as fp:
-        nb_bb_per_class = json.load(fp)
-        total = sum(nb_bb_per_class.values())
-        weights = {Nuscene_dataset.correspondances_classes[k]:float(v/total) for k,v in nb_bb_per_class.items()}
+
 with tf.device('/GPU:' + args.gpu_selected):
     model.fit(dataset_tr, callbacks=[
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
                      eval_rate=dataset.batch_size * 5)
-    ],class_weight=weights)
+    ])
