@@ -89,8 +89,7 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
                                                                       f" {args.approximationAccuracy} " +
                                                                       f"(none = identity) aux prédictions" +
                                                                       f" au préalable"],
-               but_essai="Correction des essais SGD et Adam : avec MSE la loss était négative ce qui est contradictoire" + \
-                         " avec définition. ",
+               but_essai="Tester le modèle avec des images beaucoup plus petites",
                informations_additionnelles=informations_additionnelles+texte_additionnel if args.classes_weights != "false" else informations_additionnelles,
                id=FolderInfos.id,dataset_name="Nuscene",taille_x_img_redim=dataset.image_shape[0],taille_y_img_redim=dataset.image_shape[1])
 

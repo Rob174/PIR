@@ -3,6 +3,9 @@ import numpy as np
 from PIL import Image
 import random
 
+from model_keras.FolderInfos import FolderInfos
+
+
 class Nuscene_dataset:
     correspondances_classes = {
                 "animal": 0,
@@ -27,7 +30,7 @@ class Nuscene_dataset:
                 "vehicle.emergency.police": 19,
                 "vehicle.motorcycle": 20,
                 "vehicle.trailer": 21,
-                "vehicle.truck": 22 
+                "vehicle.truck": 22
             }
     def __init__(self,tr_prct: float =0.6,img_width: int =1600,limit_nb_tr: int =None,taille_mini_px=10):
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
@@ -46,6 +49,12 @@ class Nuscene_dataset:
                 self.limit_nb_tr = limit_nb_tr
             else:
                 self.limit_nb_tr = len(self.dataset_tr)
+            path_stat_per_class_eff = FolderInfos.data_folder+"/2021-04-19_12h06min43s_class_distribution_nuscene/2021-04-19_12h06min43s_class_distribution_nuscenestatistics.json"
+            path_stat_per_class = FolderInfos.data_folder+ "/2021-04-19_12h06min43s_class_distribution_nuscene/2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
+            with open(path_stat_per_class,"r") as fp:
+                self.stat_per_class  = json.load(fp)
+            with open(path_stat_per_class_eff,"r") as fp:
+                self.stat_per_class_eff  = json.load(fp)
 
     def getImage(self, index_image):
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
@@ -69,26 +78,71 @@ class Nuscene_dataset:
                 if abs(coin1_transfo[0] - coin2_transfo[0]) > self.taille_mini_px and abs(coin1_transfo[1] - coin2_transfo[1]) > self.taille_mini_px:
                     label[self.correspondances_classes[k]] += 1
         return label
-    def getNextBatchTr(self):
-        bufferLabel, bufferImg = [], []
+    def getLabelsWithUnitWeight(self,index_image):
+        return [self.getLabels(index_image),1]
+
+    def getLabelsWithWeightsPerClass(self,index_image):
+        label = self.getLabels(index_image)
+        poids = 0
+        total = float(sum(v for v in self.stat_per_class.values()))
+        for i in range(len(label)):
+            nom_classe = [k for k,v in self.correspondances_classes.items() if v == i][0]
+            nb_occurence = self.stat_per_class[nom_classe]
+            poids += nb_occurence
+        poids /= total
+        return [label,poids]
+
+    def getLabelsWithWeightsPerClassEff(self,index_image):
+        label = self.getLabels(index_image)
+        poids = 0
+        total = float(sum(v for k in self.stat_per_class.keys() for v in self.stat_per_class[k].values()))
+        for i in range(len(label)):
+            nom_classe = [k for k,v in self.correspondances_classes.items() if v == i][0]
+            effectif = label[i]
+            nb_occurence = self.stat_per_class[nom_classe][str(effectif)]
+            poids += nb_occurence
+        poids /= total
+        return [label,poids]
+    def getNextBatchTr(self,with_weights="False"):
+        bufferLabel, bufferImg, bufferWeight = [], [], []
         index_imgs = list(range(len(self.dataset_tr)))
+        if with_weights == "False":
+            get_labels_fct = self.getLabelsWithUnitWeight
+        elif with_weights == "class":
+            get_labels_fct = self.getLabelsWithWeightsPerClass
+        elif with_weights == "classEff":
+            get_labels_fct = self.getLabelsWithWeightsPerClassEff
+        else:
+            raise Exception("Class weight argument not recognized")
         random.shuffle(index_imgs)
         for i in range(min(self.limit_nb_tr,len(self.dataset_tr))):
             bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.getLabels(i))
+            [label,poids] = get_labels_fct(i)
+            bufferLabel.append(label)
+            bufferWeight.append(poids)
             if len(bufferImg) % self.batch_size == 0 and i > 0:
-                batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
-                bufferLabel, bufferImg = [], []
+                batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0), np.stack(bufferWeight,axis=0)
+                bufferLabel, bufferImg,bufferWeight = [], [],[]
                 yield batches
-    def getNextBatchValid(self):
-        bufferLabel, bufferImg = [], []
+    def getNextBatchValid(self,with_weights="False"):
+        bufferLabel, bufferImg, bufferWeight = [], [], []
         index_imgs = list(range(len(self.dataset_valid)))
+        if with_weights == "False":
+            get_labels_fct = self.getLabelsWithUnitWeight
+        elif with_weights == "class":
+            get_labels_fct = self.getLabelsWithWeightsPerClass
+        elif with_weights == "classEff":
+            get_labels_fct = self.getLabelsWithWeightsPerClassEff
+        else:
+            raise Exception("Class weight argument not recognized")
         random.shuffle(index_imgs)
         while True:
             for i in range(len(self.dataset_valid)):
                 bufferImg.append(self.getImage(i))
-                bufferLabel.append(self.getLabels(i))
+                [label,poids] = get_labels_fct(i)
+                bufferLabel.append(label)
+                bufferWeight.append(poids)
                 if len(bufferImg) % self.batch_size == 0 and i > 0:
-                    batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
-                    bufferLabel, bufferImg = [], []
+                    batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0),np.stack(bufferWeight,axis=0)
+                    bufferLabel, bufferImg, bufferWeight = [], [],[]
                     yield batches
