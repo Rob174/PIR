@@ -2,6 +2,9 @@ import json
 import os
 import sys
 
+from PIL import Image
+import numpy as np
+
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
@@ -99,7 +102,13 @@ with tf.device('/GPU:' + args.gpu_selected):
     model.compile(optimizer=optimizer, loss=loss_mse,
                   metrics=[approx_accuracy(args.approximationAccuracy)])
 
-plot_model(model, output_path=FolderInfos.base_filename + "model.dot")
+name = FolderInfos.base_filename + "model.dot"
+name_png = FolderInfos.base_filename + "model.png"
+plot_model(model, output_path=name)
+with file_writer.as_default():
+    image = np.array(Image.open(name_png))
+    tf.summary.image(f"Modele",np.stack((image,),axis=0),step=0)
+    file_writer.flush()
 
 texte_poids_par_classe = "\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
 texte_poids_par_classe_eff= "\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
