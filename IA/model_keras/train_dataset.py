@@ -11,13 +11,14 @@ sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD
 
-from IA.model_keras.data.generate_data import Nuscene_dataset
+from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
 from IA.model_keras.model.model_orig import make_model
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
 from tensorflow.keras.metrics import categorical_accuracy
 from IA.model_keras.parser import parse
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
+from IA.model_keras.FolderInfos import FolderInfos
 
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -31,8 +32,10 @@ for device in physical_devices:
 
 args = parse()
 
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,batch_size=args.batch_size)
-dataset.batch_size = args.batch_size
+FolderInfos.init()
+
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
+                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder)
 
 
 def approx_accuracy(modeApprox="none"):
@@ -47,15 +50,31 @@ def approx_accuracy(modeApprox="none"):
         raise Exception("Unknown approximation function %s" % modeApprox)
 
     def approx_accuracy_round(y_true, y_pred):
-        return categorical_accuracy(y_true, fct_approx(y_pred))
+        nb_classes = len(Nuscene_dataset.correspondances_classes.keys())
+        # Extraction des informations des tenseurs
+        y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[1,dataset.batch_size,nb_classes])
+        y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
+
+        y_true_label = tf.slice(y_true,[0,0,0],size=[dataset.batch_size,1,nb_classes])
+        y_true_label = tf.reshape(y_true_label,[dataset.batch_size,nb_classes])
+
+        return categorical_accuracy(y_true_label, fct_approx(y_pred_extracted))
 
     return approx_accuracy_round
 
 def loss_mse(y_true,y_pred):
-    y_true_label = tf.slice(y_true,[0,0,0],[dataset.batch_size,1,len(Nuscene_dataset.correspondances_classes.keys())])
-    y_true_poids = tf.slice(y_true, [0, 1, 0],
-                            [dataset.batch_size, 2, len(Nuscene_dataset.correspondances_classes.keys())])
-    return tf.math.reduce_mean(tf.pow(y_true_label-y_pred,2)*y_true_poids)
+    nb_classes = len(Nuscene_dataset.correspondances_classes.keys())
+    # Extraction des informations des tenseurs
+    y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[1,dataset.batch_size,nb_classes])
+    y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
+
+    y_true_label = tf.slice(y_true,[0,0,0],size=[dataset.batch_size,1,nb_classes])
+    y_true_label = tf.reshape(y_true_label,[dataset.batch_size,nb_classes])
+
+    y_true_poids = tf.slice(y_true, [0, 1, 0], size=[dataset.batch_size, 1, nb_classes])
+    y_true_poids = tf.reshape(y_true_poids,[dataset.batch_size,nb_classes])
+
+    return tf.math.reduce_mean(tf.pow(y_true_label-y_pred_extracted,2)*y_true_poids)
 
 with tf.device('/GPU:' + args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
@@ -74,9 +93,6 @@ with tf.device('/GPU:' + args.gpu_selected):
     model.compile(optimizer=optimizer, loss=loss_mse,
                   metrics=[approx_accuracy(args.approximationAccuracy)])
 
-from IA.model_keras.FolderInfos import FolderInfos
-
-FolderInfos.init()
 plot_model(model, output_path=FolderInfos.base_filename + "model.dot")
 
 logdir = FolderInfos.base_folder
@@ -133,9 +149,13 @@ path_weights = "/".join(FolderInfos.base_folder.split("/")[:-2])\
                +"/2021-04-19_12h06min43s_class_distribution_nuscene/"\
                +"2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
 
-with tf.device('/GPU:' + args.gpu_selected):
-    model.fit(dataset_tr, callbacks=[
+callbacks = None # Pour le debug
+"""
+callbacks = [
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
                      eval_rate=dataset.batch_size * 5)
-    ])
+    ]
+# """
+with tf.device('/GPU:' + args.gpu_selected):
+    model.fit(dataset_tr, callbacks=callbacks)

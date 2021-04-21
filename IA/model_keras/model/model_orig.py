@@ -64,4 +64,7 @@ def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4,
     x = Dropout(rate=dropout_rate)(x)
     # couche fully connected layer
     outputs = Dense(units=num_classes, activation=last_activation)(x)
-    return Model([inputs], [outputs], name="keras_model")
+    outputs = tf.keras.backend.stack([outputs],axis=0) # Keras requiert le même nombre de dimensions pour y_true et y_pred (cf loss_mse)
+    model =  Model([inputs], [outputs], name="keras_model")
+    print(model.summary())
+    return model
