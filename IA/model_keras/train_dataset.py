@@ -34,8 +34,9 @@ args = parse()
 
 FolderInfos.init()
 
+classes_weights = args.classes_weights
 dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
-                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder)
+                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder,with_weights=classes_weights)
 
 
 def approx_accuracy(modeApprox="none"):
@@ -103,9 +104,10 @@ texte_poids_par_classe = "\nPondération de chaque image suivant le nombre d'app
 texte_poids_par_classe_eff= "\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
 informations_additionnelles = "\nUtilisation d'une métrique custom pour corriger cela\n"+ "Normalisation des images par 255 avant passage dans le réseau"
 informations_additionnelles += f"Garde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
-if args.classes_weights == "class":
+
+if classes_weights == "class":
     informations_additionnelles += texte_poids_par_classe
-elif args.classes_weigths == "classEff":
+elif classes_weights == "classEff":
     informations_additionnelles += texte_poids_par_classe_eff
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
 create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
@@ -121,10 +123,10 @@ create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent
 tr_generator_fct = None
 valid_generator_fct = None
 
-if args.classes_weights == "class":
+if classes_weights == "class":
     tr_generator_fct = lambda x: dataset.getNextBatchTr(with_weights="class")
     valid_generator_fct = lambda x: dataset.getNextBatchValid(with_weights="class")
-elif args.classes_weigths == "classEff":
+elif classes_weights == "classEff":
     tr_generator_fct = lambda x: dataset.getNextBatchTr(with_weights="classEff")
     valid_generator_fct = lambda x: dataset.getNextBatchValid(with_weights="classEff")
 
@@ -150,7 +152,7 @@ path_weights = "/".join(FolderInfos.base_folder.split("/")[:-2])\
                +"2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
 
 callbacks = None # Pour le debug
-"""
+# """
 callbacks = [
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
