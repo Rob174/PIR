@@ -162,7 +162,8 @@ class Nuscene_dataset:
         for i in range(len(label)):
             nom_classe = [k for k, v in self.correspondances_classes.items() if v == i][0]
             effectif = label[i]
-            poids[i] = self.stat_per_class_eff[nom_classe][str(effectif)]
+            print(nom_classe,":",self.stat_per_class_eff[nom_classe])
+            poids[i] = self.stat_per_class_eff[nom_classe][str(int(effectif))]
         total = len(self.dataset_tr)
         poids /= total
         return np.stack((label, poids), axis=0)
