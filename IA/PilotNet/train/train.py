@@ -52,7 +52,7 @@ dataset_valid = tf.data.Dataset.from_generator(dataset.val_batch_generator,
                                                            tf.TensorShape([None])))\
     .prefetch(tf.data.experimental.AUTOTUNE).repeat() # Sans argument : répète à l'infini
 
-FolderInfos.init()
+FolderInfos.init(subdir="pilotnet")
 
 
 logdir = FolderInfos.base_folder
