@@ -95,3 +95,4 @@ create_summary(writer=file_writer, optimizer_name="adam", optimizer_parameters={
                nb_img_tot=45407,nb_epochs=30,nb_tr_img=32325) # Calculé d'après le fichier d'annotations
 with tf.device('/GPU:' + "0"):
     model.fit(dataset_tr, callbacks=callbacks)
+    model.save(FolderInfos.base_filename+"model.h5")
