@@ -22,13 +22,14 @@ class EvalCallback(tf.keras.callbacks.Callback):
     def on_train_batch_end(self, batch, logs=None):
         if self.step_number % self.eval_rate == 0:
             batch = list(self.dataset.take(1).as_numpy_iterator())[0]
-            print(len(batch))
             [batch_imgs, batch_labels] = batch
             test_output = self.model.test_on_batch(batch_imgs, batch_labels)
+            if type(test_output) is not list:
+                test_output = [test_output]
 
             items_to_write = {}
             for i,[metric, metric_value] in enumerate(zip(self.metrics_names, test_output)):
-                if i > 0:
+                if metric == "prct_error":
                     items_to_write[metric] = 100*(1.-metric_value)
                 else:
                     items_to_write[metric] = metric_value
