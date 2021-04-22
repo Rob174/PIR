@@ -110,9 +110,9 @@ with file_writer.as_default():
     tf.summary.image(f"Modele",np.stack((image,),axis=0),step=0)
     file_writer.flush()
 
-texte_poids_par_classe = "\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
-texte_poids_par_classe_eff= "\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
-informations_additionnelles = "\nUtilisation d'une métrique custom pour corriger cela\n"+ "Normalisation des images par 255 avant passage dans le réseau"
+texte_poids_par_classe = "\n\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
+texte_poids_par_classe_eff= "\n\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
+informations_additionnelles = "\n\nUtilisation d'une métrique custom pour corriger cela\n\n"+ "Normalisation des images par 255 avant passage dans le réseau"
 informations_additionnelles += f"Garde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
 
 if classes_weights == "class":
@@ -120,15 +120,17 @@ if classes_weights == "class":
 elif classes_weights == "classEff":
     informations_additionnelles += texte_poids_par_classe_eff
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
-create_summary(file_writer, args.optimizer, optimizer_params, "MSE", [f"pourcent d'erreur de" +
-                                                                      f" prediction en appliquant la fonction" +
-                                                                      f" {args.approximationAccuracy} " +
-                                                                      f"(none = identity) aux prédictions" +
-                                                                      f" au préalable"],
-               but_essai="Tester le modèle avec des images beaucoup plus petites",
+create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_parameters=optimizer_params, loss="MSE",
+               metriques_utilisees=[f"pourcent d'erreur de" +
+                                    f" prediction en appliquant la fonction" +
+                                    f" {args.approximationAccuracy} " +
+                                    f"(none = identity) aux prédictions" +
+                                    f" au préalable"],
+               but_essai="",
                informations_additionnelles=informations_additionnelles,
                id=FolderInfos.id,dataset_name="Nuscene",taille_x_img_redim=dataset.image_shape[0],
-               taille_y_img_redim=dataset.image_shape[1])
+               taille_y_img_redim=dataset.image_shape[1],batch_size=dataset.batch_size,
+               nb_img_tot=173959,nb_img_utilisees=args.nb_images,nb_epochs=args.nb_epochs)
 
 tr_generator_fct = None
 valid_generator_fct = None
@@ -145,12 +147,12 @@ dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
                                             output_types=(tf.float32, tf.float32),
                                             output_shapes=(tf.TensorShape([None, None, None, None]),
                                                            tf.TensorShape([None, None, None])))\
-    .prefetch(tf.data.experimental.AUTOTUNE)
+    .prefetch(tf.data.experimental.AUTOTUNE).repeat(args.nb_epochs)
 dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
                                                  output_types=(tf.float32, tf.float32),
                                                  output_shapes=(tf.TensorShape([None, None, None, None]),
                                                                 tf.TensorShape([None, None, None]))) \
-    .prefetch(tf.data.experimental.AUTOTUNE)
+    .prefetch(tf.data.experimental.AUTOTUNE).repeat(args.nb_epochs)
 dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid,
                                                output_types=(tf.float32, tf.float32),
                                                output_shapes=(tf.TensorShape([None, None, None, None]),

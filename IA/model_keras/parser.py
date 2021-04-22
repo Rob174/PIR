@@ -32,5 +32,7 @@ def parse():
                         help="[Optionnel] Indique le nb d'imgs passées en entrainement avant l'arrêt")
     parser.add_argument('-tailleMini', dest='taille_mini_obj_px', default=10, type=int,
                         help="[Optionnel] Indique la taille minimale des objets que doit détecter le réseau (après redimensionnement)")
+    parser.add_argument('-nbEpochs', dest='nb_epochs', default=1, type=int,
+                        help="[Optionnel] Indique le nb de passage du dataset")
     args = parser.parse_args()
     return args
