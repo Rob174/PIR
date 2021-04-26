@@ -22,6 +22,8 @@ def parse():
                         help="[Optionnel] Indique la gpu visible par le script tensorflow")
     parser.add_argument('-redLayer', dest='reduction_layer', default="globalavgpool", type=str,
                         help="[Optionnel] Indique la gpu visible par le script tensorflow")
+    parser.add_argument('-spatAtt', dest='spatial_attention', default="n", type=str,
+                        help="[Optionnel] Indique la gpu visible par le script tensorflow")
     parser.add_argument('-dptRate', dest='dropout_rate', default="0.5", type=str,
                         help="[Optionnel] Indique la gpu visible par le script tensorflow")
     parser.add_argument('-opti', dest='optimizer', default="adam", type=str,

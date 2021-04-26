@@ -33,7 +33,7 @@ for device in physical_devices:
 
 args = parse()
 
-FolderInfos.init()
+FolderInfos.init(subdir="model_keras")
 
 
 logdir = FolderInfos.base_folder
@@ -119,6 +119,15 @@ if classes_weights == "class":
     informations_additionnelles += texte_poids_par_classe
 elif classes_weights == "classEff":
     informations_additionnelles += texte_poids_par_classe_eff
+if args.reduction_layer == "globalavgpool":
+    informations_additionnelles += "\n\nDerniere réduction avec global average pooling"
+elif args.reduction_layer == "spp":
+    informations_additionnelles += "\n\nDerniere réduction avec spatial pyramidal poooling"
+elif args.reduction_layer == "flatten":
+    informations_additionnelles += "\n\nDerniere réduction avec flatten simple"
+if args.spatial_attention == "y":
+    informations_additionnelles += "\n\nSpatial attention module apres le Add de chaque étage suivant l'implémentation de Yolo"
+
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
 create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_parameters=optimizer_params, loss="MSE",
                metriques_utilisees=[f"pourcent d'erreur de" +
