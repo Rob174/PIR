@@ -157,11 +157,10 @@ class Nuscene_dataset:
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
         image = Image.open(path)
         image = image.resize(self.image_shape)
-        image = np.array(image)
-        if self.augmentation is True:
+        image = np.array(image,dtype=np.float32) / 255.
+        if self.augmentation == 't':
             for augmenteur in self.augmentations:
                 image = augmenteur.augment(image)
-        image /= 255.
         return image
 
     def getLabels(self, index_image):
