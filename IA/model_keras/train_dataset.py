@@ -136,6 +136,10 @@ elif args.activation == "mish":
     informations_additionnelles += "\n\nActivation mish sur toutes les couches"
 else:
     raise Exception(f"Unknow arg {args.activation}")
+
+if args.augmentation == "t":
+    informations_additionnelles += "\n\nAugmentations : \n"+"\n- ".join(list(map(
+        lambda x:x.__name__+", paramètres : "+str(x.augm_params),dataset.augmentations)))
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
 create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_parameters=optimizer_params, loss="MSE",
                metriques_utilisees=[f"pourcent d'erreur de" +

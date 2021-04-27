@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import cv2
 import matplotlib
 
+from IA.model_keras.data.Flou_augm import Flou_augment
 from IA.model_keras.data.Luminance_augm import Luminance_augment
 
 matplotlib.use('Agg')
@@ -67,7 +68,7 @@ class Nuscene_dataset:
         if augmentation == "f":
             self.augmentations = []
         elif augmentation == "t":
-            self.augmentations = [Luminance_augment]
+            self.augmentations = [Luminance_augment,Flou_augment]
         Nuscene_dataset.correspondances_index_classes = {v:k for k,v in Nuscene_dataset.correspondances_classes_index.items()}
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)

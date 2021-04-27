@@ -2,18 +2,18 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
 
 
-class Luminance_augment:
+class Flou_augment:
     augm_params = {
+        "max_std_flou":2
     }
     @staticmethod
     def augment(image):
-        image_hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-        image_hsv[:,:,2] *= (0.2+1.5*np.random.rand())
-        image_hsv[:,:,2] = np.clip(image_hsv[:,:,2],0,1.)
-        image = cv2.cvtColor(image_hsv,cv2.COLOR_HSV2RGB)
-        image = np.array(image,dtype=np.float)
+        std_flou = np.random.rand()*Flou_augment.augm_params["max_std_flou"]
+        for c in range(3):
+            image[:, :, c] = gaussian_filter(image[:, :, c], sigma=(std_flou, std_flou))
         return image
 
 if __name__ == "__main__":
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print(np.max(image))
     plt.figure(1)
     plt.imshow(image)
-    image_augm = Luminance_augment.augment(image)
+    image_augm = Flou_augment.augment(image)
     print(np.max(image_augm))
     plt.figure(2)
     plt.imshow(image_augm)
