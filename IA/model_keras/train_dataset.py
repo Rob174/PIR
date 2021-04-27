@@ -44,7 +44,7 @@ file_writer.set_as_default()
 classes_weights = args.classes_weights
 dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
                           batch_size=args.batch_size,data_folder=FolderInfos.data_folder,with_weights=classes_weights,
-                          summary_writer=file_writer)
+                          summary_writer=file_writer,augmentation=args.augmentation)
 
 
 def approx_accuracy(modeApprox="none"):
@@ -127,7 +127,15 @@ elif args.reduction_layer == "flatten":
     informations_additionnelles += "\n\nDerniere réduction avec flatten simple"
 if args.spatial_attention == "y":
     informations_additionnelles += "\n\nSpatial attention module apres le Add de chaque étage suivant l'implémentation de Yolo"
+if args.regularize_modules == "y":
+    informations_additionnelles += "\n\nRegularize modules with l1_l2 (default params)"
 
+if args.activation == "relu":
+    informations_additionnelles += "\n\nActivation relu sur toutes les couches"
+elif args.activation == "mish":
+    informations_additionnelles += "\n\nActivation mish sur toutes les couches"
+else:
+    raise Exception(f"Unknow arg {args.activation}")
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
 create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_parameters=optimizer_params, loss="MSE",
                metriques_utilisees=[f"pourcent d'erreur de" +

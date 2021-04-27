@@ -6,41 +6,51 @@
 from tensorflow.keras.layers import Dense,Conv2D,GlobalAveragePooling2D,Input,BatchNormalization,Activation,SeparableConv2D,Add,MaxPooling2D,Dropout,Flatten
 import tensorflow as tf
 from tensorflow.keras import Model
-import tensorflow.keras.regularizers as regularizers
+from tensorflow.keras.regularizers import l1_l2
 
+from IA.model_keras.model.Mish_activation import Mish
 from IA.model_keras.model.spatial_attention_module import spatial_attention_module
 from IA.model_keras.model.spatial_pyramid_pooling import spatialPyramidPooling
 
 '''cette fonction permet de créer le modéle(architecture de l'IA)'''
 '''couche par ordre input, couche de convolution(filtre, noyau,stride(pas de déplacement), padding(),batchNormalisation(ameliorer la convergence )'''
 
+activation_choice = "relu"
 
+def activation():
+    if activation_choice == "relu":
+        return Activation(activation="relu")
+    elif activation_choice == "mish":
+        return Mish()
 def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4, reduction_layer="globalavgpool",
-               dropout_rate=0.5, spatial_attention="n"):
+               dropout_rate=0.5, spatial_attention="n",regularize_modules="n",activation_param="relu"):
+    global activation_choice
+    activation_choice = activation_param
     inputs = Input(shape=input_shape)
-
     # Entry block
     # preprocess the data
     x = Conv2D(filters=32, kernel_size=3, strides=2, padding="same",use_bias=False)(inputs)
     x = BatchNormalization()(x)
     # fonction d'activation
-    x = Activation(activation="relu")(x)
+    x = activation()(x)
 
     x = Conv2D(filters=64, kernel_size=3, padding="same",use_bias=False)(x)
     x = BatchNormalization()(x)
-    x = Activation(activation="relu")(x)
+    x = activation()(x)
 
     previous_block_activation = x  # Set aside residual
     liste_filtres = [128, 256, 512, 728, 1024]
     liste_filtres = liste_filtres[:nb_modules + 1]
     for size in liste_filtres[:-1]:
-        x = Activation(activation="relu")(x)
+        x = activation()(x)
         # réduit le nombre de parametre (matrice multipliée au lieu de matrice normale)
-        x = SeparableConv2D(filters=size, kernel_size=3, padding="same",use_bias=False)(x)
+        x = SeparableConv2D(filters=size, kernel_size=3, padding="same",use_bias=False,
+                            activity_regularizer=l1_l2() if regularize_modules == "y" else None)(x)
         x = BatchNormalization()(x)
 
-        x = Activation(activation="relu")(x)
-        x = SeparableConv2D(filters=size, kernel_size=3, padding="same",use_bias=False)(x)
+        x = activation()(x)
+        x = SeparableConv2D(filters=size, kernel_size=3, padding="same",use_bias=False,
+                            activity_regularizer=l1_l2() if regularize_modules == "y" else None)(x)
         x = BatchNormalization()(x)
 
         # couche de pooling
@@ -55,7 +65,7 @@ def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4,
 
     x = SeparableConv2D(filters=liste_filtres[-1], kernel_size=3, padding="same",use_bias=False)(x)
     x = BatchNormalization()(x)
-    x = Activation(activation="relu")(x)
+    x = activation()(x)
 
     if reduction_layer == "globalavgpool":
         '''moyenne de toute les valeurs au lieu du max'''

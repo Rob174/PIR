@@ -36,5 +36,11 @@ def parse():
                         help="[Optionnel] Indique la taille minimale des objets que doit détecter le réseau (après redimensionnement)")
     parser.add_argument('-nbEpochs', dest='nb_epochs', default=1, type=int,
                         help="[Optionnel] Indique le nb de passage du dataset")
+    parser.add_argument('-regMod', dest='regularize_modules', default="n", type=str,
+                        help="[Optionnel] Indique le nb de passage du dataset")
+    parser.add_argument('-activ', dest='activation', default="relu", type=str,
+                        help="[Optionnel] Indique le nb de passage du dataset")
+    parser.add_argument('-augm', dest='augmentation', default="f", type=str,
+                        help="[Optionnel] Indique le nb de passage du dataset")
     args = parser.parse_args()
     return args

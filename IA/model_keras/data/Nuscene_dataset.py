@@ -5,9 +5,13 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-from model_keras.FolderInfos import FolderInfos
+from IA.model_keras.FolderInfos import FolderInfos
 import matplotlib.pyplot as plt
+import cv2
 import matplotlib
+
+from IA.model_keras.data.Luminance_augm import Luminance_augment
+
 matplotlib.use('Agg')
 
 
@@ -40,7 +44,7 @@ class Nuscene_dataset:
     correspondances_index_classes = None
 
     def __init__(self, data_folder: str, summary_writer, tr_prct: float = 0.6, img_width: int = 1600, limit_nb_tr: int = None, taille_mini_px=10,
-                 with_weights="False", batch_size=10):
+                 with_weights="False", batch_size=10,augmentation="f"):
         """
 
         :param data_folder: chemin vers le dossier data
@@ -57,7 +61,13 @@ class Nuscene_dataset:
                                 - classEff : donne plus d'importance aux effectifs de classes sous-représentés :
                                              si il est rare que 100 chiens soit présents sur une image,
                                              si ce cas se présente on va diminuer la loss concernant le nombre de chiens
+        :param augmentation: indique si l'on doit réaliser les augmentations
         """
+        self.augmentation = augmentation
+        if augmentation == "f":
+            self.augmentations = []
+        elif augmentation == "t":
+            self.augmentations = [Luminance_augment]
         Nuscene_dataset.correspondances_index_classes = {v:k for k,v in Nuscene_dataset.correspondances_classes_index.items()}
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)
@@ -147,7 +157,11 @@ class Nuscene_dataset:
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
         image = Image.open(path)
         image = image.resize(self.image_shape)
-        image = np.array(image) / 255.
+        image = np.array(image)
+        if self.augmentation is True:
+            for augmenteur in self.augmentations:
+                image = augmenteur.augment(image)
+        image /= 255.
         return image
 
     def getLabels(self, index_image):
