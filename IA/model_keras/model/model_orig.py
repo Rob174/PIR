@@ -7,6 +7,7 @@ from tensorflow.keras.layers import Dense,Conv2D,GlobalAveragePooling2D,Input,Ba
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.regularizers import l1_l2
+from tensorflow.python.keras.layers import Lambda
 
 from IA.model_keras.model.Mish_activation import Mish
 from IA.model_keras.model.spatial_attention_module import spatial_attention_module
@@ -80,8 +81,8 @@ def make_model(input_shape, num_classes, last_activation="linear", nb_modules=4,
     '''on met 50% des pixels en blanc pour eviter que le réseau se base sur les memes pixels (couche de régularisation)'''
     x = Dropout(rate=dropout_rate)(x)
     # couche fully connected layer
-    outputs = Dense(units=num_classes, activation=last_activation)(x)
-    outputs = tf.keras.backend.stack([outputs],axis=0) # Keras requiert le même nombre de dimensions pour y_true et y_pred (cf loss_mse)
-    model =  Model([inputs], [outputs], name="keras_model")
+    output = Dense(units=num_classes, activation=last_activation)(x)
+    output = Lambda(lambda x:tf.keras.backend.stack([x],axis=1))(output) # Keras requiert le même nombre de dimensions pour y_true et y_pred (cf loss_mse)
+    model =  Model([inputs], [output], name="keras_model")
     print(model.summary())
     return model

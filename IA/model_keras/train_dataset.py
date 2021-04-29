@@ -1,9 +1,9 @@
-import json
 import os
 import sys
 
 from PIL import Image
 import numpy as np
+
 
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
@@ -17,10 +17,11 @@ from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
 from IA.model_keras.model.model_orig import make_model
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
 from tensorflow.keras.metrics import categorical_accuracy
-from IA.model_keras.parser import parse
+from IA.model_keras.parsers.parser1 import Parser1
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
 from IA.model_keras.FolderInfos import FolderInfos
+from IA.model_keras.analyse.matrices_confusion import make_matrices
 
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -31,7 +32,7 @@ for device in physical_devices:
         # Invalid device or cannot modify virtual devices once initialized.
         pass
 
-args = parse()
+args = Parser1()()
 
 FolderInfos.init(subdir="model_keras")
 
@@ -61,7 +62,7 @@ def approx_accuracy(modeApprox="none"):
     def approx_accuracy_round(y_true, y_pred):
         nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
         # Extraction des informations des tenseurs
-        y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[1,dataset.batch_size,nb_classes])
+        y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[dataset.batch_size,1,nb_classes])
         y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
 
         y_true_label = tf.slice(y_true,[0,0,0],size=[dataset.batch_size,1,nb_classes])
@@ -74,7 +75,7 @@ def approx_accuracy(modeApprox="none"):
 def loss_mse(y_true,y_pred):
     nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
     # Extraction des informations des tenseurs
-    y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[1,dataset.batch_size,nb_classes])
+    y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[dataset.batch_size,1,nb_classes])
     y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
 
     y_true_label = tf.slice(y_true,[0,0,0],size=[dataset.batch_size,1,nb_classes])
@@ -157,11 +158,11 @@ tr_generator_fct = None
 valid_generator_fct = None
 
 if classes_weights == "class":
-    tr_generator_fct = lambda x: dataset.getNextBatchTr(with_weights="class")
-    valid_generator_fct = lambda x: dataset.getNextBatchValid(with_weights="class")
+    tr_generator_fct = lambda x: dataset.getNextBatchTr()
+    valid_generator_fct = lambda x: dataset.getNextBatchValid()
 elif classes_weights == "classEff":
-    tr_generator_fct = lambda x: dataset.getNextBatchTr(with_weights="classEff")
-    valid_generator_fct = lambda x: dataset.getNextBatchValid(with_weights="classEff")
+    tr_generator_fct = lambda x: dataset.getNextBatchTr()
+    valid_generator_fct = lambda x: dataset.getNextBatchValid()
 
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
@@ -194,3 +195,15 @@ callbacks = [
 # """
 with tf.device('/GPU:' + args.gpu_selected):
     model.fit(dataset_tr, callbacks=callbacks)
+
+# Evaluation finale
+dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
+                                               output_types=(tf.float32, tf.float32),
+                                               output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                              tf.TensorShape([None, None, None]))) \
+    .prefetch(tf.data.experimental.AUTOTUNE)
+
+with tf.device('/GPU:' + args.gpu_selected):
+    make_matrices(model,dataset_full,
+                  len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
+                  summary_writer=file_writer)

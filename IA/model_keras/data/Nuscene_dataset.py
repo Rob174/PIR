@@ -186,7 +186,7 @@ class Nuscene_dataset:
                     label[self.correspondances_classes_index[k]] += 1
         return label
 
-    def getLabelsWithUnitWeight(self, index_image):
+    def getLabelsWithUnitWeight(self, index_image, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on ne pondère pas chaque classe
@@ -284,3 +284,14 @@ class Nuscene_dataset:
                     batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                     bufferLabel, bufferImg = [], []
                     yield batches
+
+    def getNextBatchFullDataset(self):
+        bufferLabel, bufferImg = [], []
+        full_dataset = list(range(int(len(self.content_dataset))))
+        for i in full_dataset:
+            bufferImg.append(self.getImage(i))
+            bufferLabel.append(self.get_labels_fct(i, dataset="valid" if i in self.dataset_valid else "tr"))
+            if len(bufferImg) % self.batch_size == 0 and i > 0:
+                batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
+                bufferLabel, bufferImg = [], []
+                yield batches

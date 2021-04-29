@@ -1,21 +1,28 @@
-import tensorflow as tf
-from tensorflow.keras.layers import Input,Dense
-from tensorflow.keras import Model
-import argparse
 import os
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
-from tensorflow.keras.metrics import categorical_accuracy
-from tensorflow.keras.optimizers import SGD
+
+from PIL import Image
 import numpy as np
+import matplotlib
 
 chemin_fichier = os.path.realpath(__file__).split("/")
 sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
 print("/".join(chemin_fichier[:-2] + ["improved_graph"]))
 sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers"]))
-from IA.model_keras.data.generate_data import Nuscene_dataset
+
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam, SGD
+
+from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
+from IA.model_keras.parsers.base_parser import BaseParser
+from IA.model_keras.model.model_xception_pretrained import make_model
+from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
+from tensorflow.keras.metrics import categorical_accuracy
+from IA.model_keras.markdown_summary.markdown_summary import create_summary
+from IA.model_keras.callbacks.EvalCallback import EvalCallback
+from IA.model_keras.FolderInfos import FolderInfos
+from IA.model_keras.analyse.matrices_confusion import make_matrices
 matplotlib.use('Agg')
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -26,43 +33,20 @@ for device in physical_devices:
         # Invalid device or cannot modify virtual devices once initialized.
         pass
 
-parser = argparse.ArgumentParser()
+args = BaseParser()()
 
-parser.add_argument('-bs', dest='batch_size', default=10, type=int,
-                    help="[Optionnel] Indique le nombre d'images par batch")
-parser.add_argument('-gpu', dest='gpu_selected', default="0", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-img_w', dest='image_width', default=400, type=int,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-lr', dest='lr', default=1e-3, type=float,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-eps', dest='epsilon', default=1e-7, type=float,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-lastAct', dest='lastActivation', default="linear", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-approxAccur', dest='approximationAccuracy', default="none", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-nbMod', dest='nb_modules', default=4, type=int,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-redLayer', dest='reduction_layer', default="globalavgpool", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-dptRate', dest='dropout_rate', default="0.5", type=str,
-                    help="[Optionnel] Indique la gpu visible par le script tensorflow")
-parser.add_argument('-opti', dest='optimizer', default="adam", type=str,
-                    help="[Optionnel] Optimisateur")
-args = parser.parse_args()
+FolderInfos.init(subdir="model_keras")
 
 
-dataset = Nuscene_dataset(img_width=args.image_width)
-dataset.batch_size = args.batch_size
-liste_lossTr = []
-liste_accuracyTr = []
-liste_lossValid = []
-liste_accuracyValid = []
-Lcoordx_tr = []
-Lcoordx_valid = []
+logdir = FolderInfos.base_folder
+file_writer = tf.summary.create_file_writer(logdir)
+file_writer.set_as_default()
 
-accur_step = 5
+
+classes_weights = args.classes_weights
+dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
+                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder,with_weights=classes_weights,
+                          summary_writer=file_writer,augmentation=args.augmentation)
 
 
 def approx_accuracy(modeApprox="none"):
@@ -77,94 +61,134 @@ def approx_accuracy(modeApprox="none"):
         raise Exception("Unknown approximation function %s" % modeApprox)
 
     def approx_accuracy_round(y_true, y_pred):
-        return categorical_accuracy(y_true, fct_approx(y_pred))
+        nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
+        # Extraction des informations des tenseurs
+        y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[dataset.batch_size,1,nb_classes])
+        y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
+
+        y_true_label = tf.slice(y_true,[0,0,0],size=[dataset.batch_size,1,nb_classes])
+        y_true_label = tf.reshape(y_true_label,[dataset.batch_size,nb_classes])
+
+        return categorical_accuracy(y_true_label, fct_approx(y_pred_extracted))
 
     return approx_accuracy_round
 
-from time import strftime, gmtime
-import os
-class FolderInfos:
-    base_folder = None
-    base_filename = None
+def loss_mse(y_true,y_pred):
+    nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
+    # Extraction des informations des tenseurs
+    y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[dataset.batch_size,1,nb_classes])
+    y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
 
-    @staticmethod
-    def init():
-        id = strftime("%Y-%m-%d_%Hh%Mmin%Ss", gmtime())
-        FolderInfos.base_folder = "/".join(os.path.realpath(__file__).split("/")[:-3] + ["data/"]) + id + "/"
-        FolderInfos.base_filename = FolderInfos.base_folder + id
-        os.mkdir(FolderInfos.base_folder)
+    y_true_label = tf.slice(y_true,[0,0,0],size=[dataset.batch_size,1,nb_classes])
+    y_true_label = tf.reshape(y_true_label,[dataset.batch_size,nb_classes])
 
+    y_true_poids = tf.slice(y_true, [0, 1, 0], size=[dataset.batch_size, 1, nb_classes])
+    y_true_poids = tf.reshape(y_true_poids,[dataset.batch_size,nb_classes])
 
-FolderInfos.init()
-
-iteratorValid = dataset.getNextBatchValid()
-compteur = 0
+    return tf.math.reduce_mean(tf.pow(y_true_label-y_pred_extracted,2)*y_true_poids)
 
 
-with tf.device('/GPU:' + "2"):
-    model_xception = tf.keras.applications.Xception(
-        include_top=True,
-        weights="imagenet",
-        input_tensor=None,
-        input_shape=None,
-        pooling=None
-    )
-    input = Input(shape=(299,299,3))
-    model_inception_cut = Model(inputs=model_xception.input,outputs=model_xception.get_layer("avg_pool").output)(input)
-    output = Dense(len(dataset.correspondances_classes_index.keys()))(model_inception_cut)
-    model = Model(inputs=input,outputs=output)
-    model.compile(optimizer=SGD(learning_rate=0.045, momentum=0.9, nesterov=False), loss=tf.keras.losses.cosine_similarity,
+with tf.device('/GPU:' + args.gpu_selected):
+    model = make_model(num_classes=len(dataset.correspondances_classes_index.keys()),
+                       last_activation=args.lastActivation,input_shape=(*dataset.image_shape,3))
+    if args.optimizer == "adam":
+        optimizer_params = {"learning_rate": args.lr, "epsilon": args.epsilon}
+        optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)
+    elif args.optimizer == "sgd":
+        optimizer_params = {"learning_rate": args.lr}
+        optimizer = SGD(learning_rate=0.045, momentum=0.9, nesterov=False)
+    else:
+        raise Exception("Optimizer %s not supported" % args.optimizer)
+
+    model.compile(optimizer=optimizer, loss=loss_mse,
                   metrics=[approx_accuracy(args.approximationAccuracy)])
 
-def plot():
-    fig, axe_error = plt.subplots()
-    loss_axe = axe_error.twinx()
-    loss_axe.plot(
-        np.array(Lcoordx_tr) * dataset.batch_size,
-        liste_lossTr, color="r", label="lossTr")
-    loss_axe.plot(np.array(Lcoordx_valid) * dataset.batch_size, liste_lossValid, color="orange", label="lossValid")
-    axe_error.plot(np.array(Lcoordx_tr) * dataset.batch_size, 100 * (1 - np.array(liste_accuracyTr)), color="g",
-                   label="tr_error")
-    axe_error.plot(np.array(Lcoordx_valid) * dataset.batch_size, 100 * (1 - np.array(liste_accuracyValid)), color="b",
-                   label="valid_error")
-    axe_error.set_xlabel("Nombre d'itérations, d'images passées")
-    axe_error.set_ylabel("Error (%)")
-    loss_axe.set_ylabel("Loss (MSE)")
-    fig.legend()
-    plt.grid()
-    plt.savefig(
-        FolderInfos.base_filename + "erreur_accuracy_batch_size_%d_lastAct_%s_accurApprox_%s_nbMod_%d_dpt_%s_redLay_%s.png"
-        % (dataset.batch_size, args.lastActivation, args.approximationAccuracy, args.nb_modules,
-           args.dropout_rate, args.reduction_layer))
-    plt.clf()
-    plt.close(fig)
 
-def adapt_image(image):
-    padded_img = np.zeros((image.shape[0],299,299,3))
-    padded_img[:,:image.shape[1],:,:] = image
-    return padded_img
+name = FolderInfos.base_filename + "model.dot"
+name_png = FolderInfos.base_filename + "model.png"
+plot_model(model, output_path=name)
+with file_writer.as_default():
+    image = np.array(Image.open(name_png))
+    tf.summary.image(f"Modele",np.stack((image,),axis=0),step=0)
+    file_writer.flush()
 
-for epochs in range(1):
-    iteratorTr = dataset.getNextBatchTr()
-    while True:
-        try:
-            batchImg, batchLabel = next(iteratorTr)
-            with tf.device('/GPU:' + args.gpu_selected):
-                [loss, accuracy] = model.train_on_batch(adapt_image(batchImg), batchLabel)
-            liste_lossTr.append(loss)
-            liste_accuracyTr.append(accuracy)
-            Lcoordx_tr.append(compteur)
-            compteur = compteur + 1
-            if compteur % accur_step == 0:
-                batchImg, batchLabel = next(iteratorValid)
-                with tf.device('/GPU:' + args.gpu_selected):
-                    [loss, accuracy] = model.test_on_batch(adapt_image(batchImg), batchLabel)
-                liste_lossValid.append(loss)
-                liste_accuracyValid.append(accuracy)
-                Lcoordx_valid.append(compteur)
-                plot()
-            if compteur == 1080:
-                break
-        except StopIteration:
-            print("Epoch %d done" % epochs)
-            break
+
+texte_poids_par_classe = "\n\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
+texte_poids_par_classe_eff= "\n\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
+informations_additionnelles = "\n\nTransfert learning depuis les poids imagenet, coupe uniquement du dernier layer\n\n"+ "Normalisation des images par 255 avant passage dans le réseau"
+informations_additionnelles += f"Garde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
+
+if classes_weights == "class":
+    informations_additionnelles += texte_poids_par_classe
+elif classes_weights == "classEff":
+    informations_additionnelles += texte_poids_par_classe_eff
+
+if args.augmentation == "t":
+    informations_additionnelles += "\n\nAugmentations : \n"+"\n- ".join(list(map(
+        lambda x:x.__name__+", paramètres : "+str(x.augm_params),dataset.augmentations)))
+## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
+create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_parameters=optimizer_params, loss="MSE",
+               metriques_utilisees=[f"pourcent d'erreur de" +
+                                    f" prediction en appliquant la fonction" +
+                                    f" {args.approximationAccuracy} " +
+                                    f"(none = identity) aux prédictions" +
+                                    f" au préalable"],
+               but_essai="",
+               informations_additionnelles=informations_additionnelles,
+               id=FolderInfos.id,dataset_name="Nuscene",taille_x_img_redim=dataset.image_shape[0],
+               taille_y_img_redim=dataset.image_shape[1],batch_size=dataset.batch_size,
+               nb_img_tot=173959,nb_img_utilisees=args.nb_images,nb_epochs=args.nb_epochs)
+
+tr_generator_fct = None
+valid_generator_fct = None
+
+if classes_weights == "class":
+    tr_generator_fct = lambda x: dataset.getNextBatchTr()
+    valid_generator_fct = lambda x: dataset.getNextBatchValid()
+elif classes_weights == "classEff":
+    tr_generator_fct = lambda x: dataset.getNextBatchTr()
+    valid_generator_fct = lambda x: dataset.getNextBatchValid()
+
+
+dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
+                                            output_types=(tf.float32, tf.float32),
+                                            output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                           tf.TensorShape([None, None, None])))\
+    .prefetch(tf.data.experimental.AUTOTUNE).repeat(args.nb_epochs)
+dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
+                                                 output_types=(tf.float32, tf.float32),
+                                                 output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                                tf.TensorShape([None, None, None]))) \
+    .prefetch(tf.data.experimental.AUTOTUNE).repeat(args.nb_epochs)
+dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid,
+                                               output_types=(tf.float32, tf.float32),
+                                               output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                              tf.TensorShape([None, None, None]))) \
+    .prefetch(tf.data.experimental.AUTOTUNE).repeat()
+
+path_weights = "/".join(FolderInfos.base_folder.split("/")[:-2])\
+               +"/2021-04-19_12h06min43s_class_distribution_nuscene/"\
+               +"2021-04-19_12h06min43s_class_distribution_stat_nb_elem_per_class.json"
+
+callbacks = None # Pour le debug
+# """
+callbacks = [
+        EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE", "prct_error"], type="tr"),
+        EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE", "prct_error"], type="valid",
+                     eval_rate=dataset.batch_size * 5)
+    ]
+# """
+with tf.device('/GPU:' + args.gpu_selected):
+    model.fit(dataset_tr, callbacks=callbacks)
+
+# Evaluation finale
+dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
+                                               output_types=(tf.float32, tf.float32),
+                                               output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                              tf.TensorShape([None, None, None]))) \
+    .prefetch(tf.data.experimental.AUTOTUNE)
+
+with tf.device('/GPU:' + args.gpu_selected):
+    make_matrices(model,dataset_full,
+                  len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
+                  summary_writer=file_writer)

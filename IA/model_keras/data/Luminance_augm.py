@@ -21,11 +21,11 @@ if __name__ == "__main__":
     image = Image.open(path)
     image = np.array(image.resize((400,225)),dtype=np.float32)
     image /= 255.
-    print(np.max(image))
     plt.figure(1)
     plt.imshow(image)
     image_augm = Luminance_augment.augment(image)
-    print(np.max(image_augm))
     plt.figure(2)
     plt.imshow(image_augm)
+    # plt.imshow(cv2.Canny(cv2.cvtColor(np.array(image*255,dtype=np.uint8), cv2.COLOR_BGR2GRAY),50,50),cmap='gray')
+
     plt.show()
