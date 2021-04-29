@@ -1,16 +1,16 @@
-from IA.model_keras.parsers.base_parser import BaseParser
+import argparse
+
+from IA.model_keras.parsers.parser0 import Parser0
 
 
-class Parser1(BaseParser):
+class Parser1(Parser0):
     def __init__(self):
         super(Parser1, self).__init__()
         self.args = dict(self.args,
-                         **{'-nbMod': ['nb_modules', 4, int, "Indique la gpu visible par le script tensorflow"],
-                            '-redLayer': ['reduction_layer', "globalavgpool", str,
-                                          "Indique la gpu visible par le script tensorflow"],
-                            '-spatAtt': ['spatial_attention', "n", str,
-                                         "Indique la gpu visible par le script tensorflow"],
-                            '-dptRate': ['dropout_rate', "0.5", str, "Indique la gpu visible par le script tensorflow"],
-                            '-regMod': ['regularize_modules', "n", str, "Indique le nb de passage du dataset"],
-                            '-activ': ['activation', "relu", str, "Indique le nb de passage du dataset"]})
-
+                         **{
+                    '-img_w':['image_width',532,int,"Indique la gpu visible par le script tensorflow"],
+                    '-lastAct':['lastActivation',"linear",str,"Indique la gpu visible par le script tensorflow"],
+                    '-approxAccur':['approximationAccuracy',"none",str,"Indique la gpu visible par le script tensorflow"],
+                    '-opti':['optimizer',"adam",str,"Optimisateur"],
+                    '-classWeigths':['classes_weights',"False",str,"Type de pondération des classes sous-représentées"],
+                    })

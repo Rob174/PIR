@@ -17,7 +17,7 @@ from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
 from IA.model_keras.model.model_orig import make_model
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
 from tensorflow.keras.metrics import categorical_accuracy
-from IA.model_keras.parsers.parser1 import Parser1
+from IA.model_keras.parsers.parser2 import Parser2
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
 from IA.model_keras.FolderInfos import FolderInfos
@@ -32,7 +32,7 @@ for device in physical_devices:
         # Invalid device or cannot modify virtual devices once initialized.
         pass
 
-args = Parser1()()
+args = Parser2()()
 
 FolderInfos.init(subdir="model_keras")
 
@@ -97,7 +97,7 @@ with tf.device('/GPU:' + args.gpu_selected):
         optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)
     elif args.optimizer == "sgd":
         optimizer_params = {"learning_rate": args.lr}
-        optimizer = SGD(learning_rate=0.045, momentum=0.9, nesterov=False)
+        optimizer = SGD(learning_rate=args.lr, momentum=0.9, nesterov=False)
     else:
         raise Exception("Optimizer %s not supported" % args.optimizer)
     model.compile(optimizer=optimizer, loss=loss_mse,
@@ -153,16 +153,6 @@ create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_para
                id=FolderInfos.id,dataset_name="Nuscene",taille_x_img_redim=dataset.image_shape[0],
                taille_y_img_redim=dataset.image_shape[1],batch_size=dataset.batch_size,
                nb_img_tot=173959,nb_img_utilisees=args.nb_images,nb_epochs=args.nb_epochs)
-
-tr_generator_fct = None
-valid_generator_fct = None
-
-if classes_weights == "class":
-    tr_generator_fct = lambda x: dataset.getNextBatchTr()
-    valid_generator_fct = lambda x: dataset.getNextBatchValid()
-elif classes_weights == "classEff":
-    tr_generator_fct = lambda x: dataset.getNextBatchTr()
-    valid_generator_fct = lambda x: dataset.getNextBatchValid()
 
 
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
