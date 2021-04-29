@@ -44,7 +44,7 @@ class Nuscene_dataset:
     }
     correspondances_index_classes = None
 
-    def __init__(self, data_folder: str, summary_writer, tr_prct: float = 0.6, img_width: int = 1600, limit_nb_tr: int = None, taille_mini_px=10,
+    def __init__(self, summary_writer, tr_prct: float = 0.6, img_width: int = 1600, limit_nb_tr: int = None, taille_mini_px=10,
                  with_weights="False", batch_size=10,augmentation="f"):
         """
 

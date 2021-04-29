@@ -44,7 +44,7 @@ file_writer.set_as_default()
 
 classes_weights = args.classes_weights
 dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
-                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder,with_weights=classes_weights,
+                          batch_size=args.batch_size,with_weights=classes_weights,
                           summary_writer=file_writer,augmentation=args.augmentation)
 
 

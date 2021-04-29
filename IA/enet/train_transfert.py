@@ -35,7 +35,7 @@ for device in physical_devices:
 
 args = Parser0()()
 
-FolderInfos.init(subdir="model_keras")
+FolderInfos.init(subdir="enet")
 
 
 logdir = FolderInfos.base_folder
@@ -43,13 +43,13 @@ file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
 
-classes_weights = args.classes_weights
-dataset = Nuscene_dataset_segmentation(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
-                          batch_size=args.batch_size,data_folder=FolderInfos.data_folder,with_weights=classes_weights,
-                          summary_writer=file_writer,augmentation=args.augmentation)
+dataset = Nuscene_dataset_segmentation(img_width=532,limit_nb_tr=args.nb_images,
+                                       taille_mini_px=args.taille_mini_obj_px,
+                                        batch_size=args.batch_size,with_weights="f",
+                                        summary_writer=file_writer,augmentation=args.augmentation)
 
 with tf.device('/GPU:' + args.gpu_selected):
-    model = create(200,200,nb_classes=23)
+    model = create(532,299,nb_classes=23)
     if args.optimizer == "adam":
         optimizer_params = {"learning_rate": args.lr, "epsilon": args.epsilon}
         optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)

@@ -3,7 +3,8 @@ from IA.model_keras.parsers.parser1 import Parser1
 
 class Parser2(Parser1):
     def __init__(self):
-        super(Parser1, self).__init__()
+        super(Parser2, self).__init__()
+        print(self.args)
         self.args = dict(self.args,
                          **{'-nbMod': ['nb_modules', 4, int, "Indique la gpu visible par le script tensorflow"],
                             '-redLayer': ['reduction_layer', "globalavgpool", str,
