@@ -24,11 +24,11 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
                 coin2 = np.array([coin2_x, coin2_y]).T
                 ## Calcul des coordonnées après redimensionnement
                 matrice_scale_down = np.array([[self.facteur_echelle, 0], [0, self.facteur_echelle]])
-                coin1_transfo = matrice_scale_down.dot(coin1)
-                coin2_transfo = matrice_scale_down.dot(coin2)
+                coin1_transfo = np.array(matrice_scale_down.dot(coin1),dtype=np.int)
+                coin2_transfo = np.array(matrice_scale_down.dot(coin2),dtype=np.int)
                 if abs(coin1_transfo[0] - coin2_transfo[0]) > self.taille_mini_px and abs(
                         coin1_transfo[1] - coin2_transfo[1]) > self.taille_mini_px:
                     label[coin1_transfo[0]:coin2_transfo[0],
                           coin1_transfo[1]:coin2_transfo[1],
-                          self.correspondances_index_classes[nom_classe]] = 1
+                          self.correspondances_classes_index[nom_classe]] = 1
         return label
