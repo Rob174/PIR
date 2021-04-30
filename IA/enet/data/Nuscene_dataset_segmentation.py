@@ -6,6 +6,7 @@ from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
 class Nuscene_dataset_segmentation(Nuscene_dataset):
     def __init__(self, *args, **kargs):
         super(Nuscene_dataset_segmentation, self).__init__(*args, **kargs)
+        self.correspondances_index_classes = {v:k for k,v in Nuscene_dataset.correspondances_classes_index.items()}
         self.get_labels_fct = self.getLabels
 
     def getLabels(self, index_image,*args,**kargs):

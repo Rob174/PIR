@@ -3,6 +3,11 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import pandas as pd
+from numpy.core.defchararray import add as addStr
+
+from IA.model_keras.FolderInfos import FolderInfos
+
 
 def make_matrices(model,dataset,nb_classes,correspondances_index_classes,summary_writer=None):
         # Constitution de la matrice de confusion finale
@@ -35,6 +40,9 @@ def make_matrices(model,dataset,nb_classes,correspondances_index_classes,summary
             top3voisins_precision = np.sum(np.diag(matrice_confusion_prct_petite)) \
                                     + np.sum(np.diag(matrice_confusion_prct_petite,k=-1)) \
                                     + np.sum(np.diag(matrice_confusion_prct_petite,k=1))
+            matrice_confusion_prct = np.round(matrice_confusion_prct,decimals=2)
+            matrice_confusion_prct_petite = np.round(matrice_confusion_prct_petite, decimals=2)
+            top3voisins_precision = np.round(top3voisins_precision,decimals=2)
             fig = plt.figure(figsize=(20,20))
             plt.imshow(matrice_confusion_prct)
             plt.title(f"Matrice de confusion de la classe {i} : {correspondances_index_classes[i]} \nPrécision : {matrice_confusion_prct[-1,-1]:.2f} % ; Top-3 précision : {top3voisins_precision:.2f} %")
@@ -63,6 +71,19 @@ def make_matrices(model,dataset,nb_classes,correspondances_index_classes,summary
                 with summary_writer.as_default():
                     tf.summary.image(f"matrice_confusion_{correspondances_index_classes[i]}", data, step=0)
                     summary_writer.flush()
+            array_matrice = np.array([['' for _ in range(len(labels)+2)] for _ in range(len(labels)+3)],dtype="U25")
+            array_matrice[0,:] = np.array(['Valeurs predites']+ [str(i) for i in labels]+[''],dtype=np.str)
+            array_matrice[1,0] = "Valeurs reelles"
+            array_matrice[2:-1,0] = np.array([str(i) for i in labels],dtype=np.str)
+            array_matrice[2:-1,1:-1] = addStr(
+                addStr(
+                    addStr(np.array(matrice_confusion_petite,dtype=np.str)," | "),
+                np.array(np.round(matrice_confusion_prct_petite,decimals=2),dtype=np.str)
+                ),"%"
+            )
+            array_matrice[-1,-1] = str(matrice_confusion[-1,-1]) +"\n"+ str(np.round(matrice_confusion_prct[-1,-1],decimals=2))+"%"
+            df = pd.DataFrame(array_matrice)
+            df.to_csv(FolderInfos.base_filename+f"matrice_confusion_{correspondances_index_classes[i]}.csv")
 
 if __name__ == "__main__":
     make_matrices(None,[(np.random.randint(0,1,(10,255,255,3)),np.random.choice([i for i in range(100) if i<10 or i > 90],(10,1,23)))
