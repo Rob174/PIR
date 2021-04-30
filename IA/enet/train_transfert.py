@@ -43,13 +43,13 @@ file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
 
-dataset = Nuscene_dataset_segmentation(img_width=532,limit_nb_tr=args.nb_images,
+dataset = Nuscene_dataset_segmentation(img_width=200,limit_nb_tr=args.nb_images,
                                        taille_mini_px=args.taille_mini_obj_px,
                                         batch_size=args.batch_size,with_weights="f",
                                         summary_writer=file_writer,augmentation=args.augmentation)
 
 with tf.device('/GPU:' + args.gpu_selected):
-    model = create(532,299,nb_classes=23)
+    model = create(200,112,nb_classes=23)
     if args.optimizer == "adam":
         optimizer_params = {"learning_rate": args.lr, "epsilon": args.epsilon}
         optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)
@@ -115,7 +115,8 @@ callbacks = [
     ]
 # """
 
-with tf.device('/GPU:' + args.gpu_selected):
+# with tf.device('/GPU:' + args.gpu_selected):
+with tf.device('/CPU:0'):
     model.fit(dataset_tr, callbacks=callbacks)
 
 
@@ -126,7 +127,7 @@ dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
                                                               tf.TensorShape([None, None, None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE)
 
-with tf.device('/GPU:' + args.gpu_selected):
+with tf.device('/CPU:0'):
     make_matrices(model,dataset_full,
                   len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
                   summary_writer=file_writer)

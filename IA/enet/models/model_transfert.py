@@ -90,3 +90,6 @@ def create(width,height,nb_classes):
     model = build(w=width,h=height,nb_couches_de_sortie_decodeur=nb_classes)
     model = transfer_weights(model,weights="/scratch/rmoine/PIR/torch_enet.pkl")
     return model
+
+if __name__ == "__main__":
+    print(create(200,200,2).summary())

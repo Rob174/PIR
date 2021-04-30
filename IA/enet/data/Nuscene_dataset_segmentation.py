@@ -29,5 +29,5 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
                         coin1_transfo[1] - coin2_transfo[1]) > self.taille_mini_px:
                     label[coin1_transfo[0]:coin2_transfo[0],
                           coin1_transfo[1]:coin2_transfo[1],
-                          self.correspondances_classes_index[nom_classe]] = 1
+                          self.correspondances_index_classes[nom_classe]] = 1
         return label
