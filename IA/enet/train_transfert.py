@@ -45,7 +45,7 @@ file_writer.set_as_default()
 
 dataset = Nuscene_dataset_segmentation(img_width=200,limit_nb_tr=args.nb_images,
                                        taille_mini_px=args.taille_mini_obj_px,
-                                        batch_size=args.batch_size,with_weights="f",
+                                        batch_size=args.batch_size,with_weights="False",
                                         summary_writer=file_writer,augmentation=args.augmentation)
 
 with tf.device('/GPU:' + args.gpu_selected):
@@ -93,17 +93,17 @@ create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_para
 dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
                                             output_types=(tf.float32, tf.float32),
                                             output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                           tf.TensorShape([None, None, None])))\
+                                                           tf.TensorShape([None, None, None,None])))\
     .prefetch(tf.data.experimental.AUTOTUNE).repeat(args.nb_epochs)
 dataset_tr_eval = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
                                                  output_types=(tf.float32, tf.float32),
                                                  output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                                tf.TensorShape([None, None, None]))) \
+                                                                tf.TensorShape([None, None, None,None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE).repeat(args.nb_epochs)
 dataset_valid = tf.data.Dataset.from_generator(dataset.getNextBatchValid,
                                                output_types=(tf.float32, tf.float32),
                                                output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                              tf.TensorShape([None, None, None]))) \
+                                                              tf.TensorShape([None, None, None,None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
 callbacks = None # Pour le debug
@@ -124,7 +124,7 @@ with tf.device('/CPU:0'):
 dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
                                                output_types=(tf.float32, tf.float32),
                                                output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                              tf.TensorShape([None, None, None]))) \
+                                                              tf.TensorShape([None, None, None,None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE)
 
 with tf.device('/CPU:0'):

@@ -85,60 +85,8 @@ class Nuscene_dataset:
                 self.limit_nb_tr = limit_nb_tr
             else:
                 self.limit_nb_tr = len(self.dataset_tr)
-
-            # Statistiques du dataset
-            self.stat_per_class_eff_tr = {classe:{} for classe in self.correspondances_classes_index.keys()}
-            self.stat_per_class_tr = {classe:0 for classe in self.correspondances_classes_index.keys()}
-            for index_img in self.dataset_tr:
-                label = self.getLabels(index_img)
-                for index_class in range(len(label)):
-                    self.stat_per_class_tr[self.correspondances_index_classes[index_class]] += label[index_class]
-                    effectif = str(int(label[index_class]))
-                    if effectif not in self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]].keys():
-                        self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] = 0
-                    self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] += 1
-
-            self.stat_per_class_eff_valid = {classe: {} for classe in self.correspondances_classes_index.keys()}
-            self.stat_per_class_valid = {classe: 0 for classe in self.correspondances_classes_index.keys()}
-            for index_img in self.dataset_valid:
-                label = self.getLabels(index_img)
-                for index_class in range(len(label)):
-                    self.stat_per_class_valid[self.correspondances_index_classes[index_class]] += label[index_class]
-                    effectif = str(int(label[index_class]))
-                    if effectif not in self.stat_per_class_eff_valid[
-                        self.correspondances_index_classes[index_class]].keys():
-                        self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] = 0
-                    self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] += 1
-
-            # Ploting distributions
-            with summary_writer.as_default():
-                for dico,name in zip([self.stat_per_class_eff_tr,self.stat_per_class_eff_valid],["training dataset","validation dataset"]):
-                    for classe, dico_classe in dico.items():
-                        range_min = min(map(int, dico_classe.keys()))
-                        range_max = max(map(int, dico_classe.keys()))
-                        vecteur_x = np.arange(range_min, range_max + 1)
-                        vecteur_bar = np.zeros((range_max - range_min + 1,))
-                        for effectif, nb_fois_vu in dico_classe.items():
-                            vecteur_bar[int(effectif) - range_min] = nb_fois_vu
-                        plt.clf()
-                        fig = plt.figure(figsize=(20, 10))
-                        fig.tight_layout(pad=0)
-                        ax = fig.add_subplot(111)
-                        ax.set_title(f"Statistiques label {classe} du {name}")
-                        ax.bar(vecteur_x, vecteur_bar, log=True)
-                        ax.set_xticks(vecteur_x)
-                        ax.set_xlabel("Nombre d'objets présents dans 1 image")
-                        ax.set_ylabel("Nombre de fois où cette situation se produit")
-                        # get image in numpy array (thanks to https://stackoverflow.com/questions/7821518/matplotlib-save-plot-to-numpy-array)
-                        fig.canvas.draw()
-                        data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-                        data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-                        data = np.stack((data,),axis=0)
-
-                        tf.summary.image(f"dataset_{name.split()[0]}_{classe}_stats",data,step=0)
-                        summary_writer.flush()
-                        plt.close()
-            print("--------------------------------------STAT DONE--------------------------------------------------")
+            # statistiques du dataset
+            self.dataset_stats(summary_writer)
             self.get_labels_fct = None
             if with_weights == "False":
                 self.get_labels_fct = self.getLabelsWithUnitWeight
@@ -148,7 +96,61 @@ class Nuscene_dataset:
                 self.get_labels_fct = self.getLabelsWithWeightsPerClassEff
             else:
                 raise Exception("Class weight argument not recognized")
+    def dataset_stats(self,summary_writer):
 
+        self.stat_per_class_eff_tr = {classe: {} for classe in self.correspondances_classes_index.keys()}
+        self.stat_per_class_tr = {classe: 0 for classe in self.correspondances_classes_index.keys()}
+        for index_img in self.dataset_tr:
+            label = self.getLabels(index_img)
+            for index_class in range(len(label)):
+                self.stat_per_class_tr[self.correspondances_index_classes[index_class]] += label[index_class]
+                effectif = str(int(label[index_class]))
+                if effectif not in self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]].keys():
+                    self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] = 0
+                self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] += 1
+
+        self.stat_per_class_eff_valid = {classe: {} for classe in self.correspondances_classes_index.keys()}
+        self.stat_per_class_valid = {classe: 0 for classe in self.correspondances_classes_index.keys()}
+        for index_img in self.dataset_valid:
+            label = self.getLabels(index_img)
+            for index_class in range(len(label)):
+                self.stat_per_class_valid[self.correspondances_index_classes[index_class]] += label[index_class]
+                effectif = str(int(label[index_class]))
+                if effectif not in self.stat_per_class_eff_valid[
+                    self.correspondances_index_classes[index_class]].keys():
+                    self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] = 0
+                self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] += 1
+
+        # Ploting distributions
+        with summary_writer.as_default():
+            for dico, name in zip([self.stat_per_class_eff_tr, self.stat_per_class_eff_valid],
+                                  ["training dataset", "validation dataset"]):
+                for classe, dico_classe in dico.items():
+                    range_min = min(map(int, dico_classe.keys()))
+                    range_max = max(map(int, dico_classe.keys()))
+                    vecteur_x = np.arange(range_min, range_max + 1)
+                    vecteur_bar = np.zeros((range_max - range_min + 1,))
+                    for effectif, nb_fois_vu in dico_classe.items():
+                        vecteur_bar[int(effectif) - range_min] = nb_fois_vu
+                    plt.clf()
+                    fig = plt.figure(figsize=(20, 10))
+                    fig.tight_layout(pad=0)
+                    ax = fig.add_subplot(111)
+                    ax.set_title(f"Statistiques label {classe} du {name}")
+                    ax.bar(vecteur_x, vecteur_bar, log=True)
+                    ax.set_xticks(vecteur_x)
+                    ax.set_xlabel("Nombre d'objets présents dans 1 image")
+                    ax.set_ylabel("Nombre de fois où cette situation se produit")
+                    # get image in numpy array (thanks to https://stackoverflow.com/questions/7821518/matplotlib-save-plot-to-numpy-array)
+                    fig.canvas.draw()
+                    data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+                    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+                    data = np.stack((data,), axis=0)
+
+                    tf.summary.image(f"dataset_{name.split()[0]}_{classe}_stats", data, step=0)
+                    summary_writer.flush()
+                    plt.close()
+        print("--------------------------------------STAT DONE--------------------------------------------------")
     def getImage(self, index_image):
         """
         Récupération de l'image de path précisé à l'index index_image du fichier json représentant le dataset Nuscene

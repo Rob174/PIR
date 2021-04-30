@@ -1,13 +1,30 @@
 import numpy as np
 
 from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
-
+import json
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 class Nuscene_dataset_segmentation(Nuscene_dataset):
     def __init__(self, *args, **kargs):
         super(Nuscene_dataset_segmentation, self).__init__(*args, **kargs)
         self.correspondances_index_classes = {v:k for k,v in Nuscene_dataset.correspondances_classes_index.items()}
         self.get_labels_fct = self.getLabels
+
+    def dataset_stats(self,summary_writer):
+        # stats tr
+        # for dataset_name,dataset in zip(["tr","valid"],[self.dataset_tr,self.dataset_valid]):
+        #     array_compte = np.zeros((len(self.correspondances_index_classes.keys()),))
+        #     for i in dataset:
+        #         label = self.getLabels(i)
+        #         compte_pixel = np.sum(label,axis=[0,1]) # TODO : à détailler comme pour le précédent dataset
+        #         array_compte += compte_pixel
+        #     fig = plt.figure(figsize=(20, 10))
+        #     fig.tight_layout(pad=0)
+        #     ax = fig.add_subplot(111)
+        #     ax.set_title(f"Statistiques label {self.correspondances_index_classes[]} du dataset {dataset_name}")
+        pass # TODO : faire les stats mais par nb de pixels de chaque classe cette fois-ci
 
     def getLabels(self, index_image,*args,**kargs):
         """
