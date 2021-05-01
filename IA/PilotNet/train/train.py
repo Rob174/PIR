@@ -18,7 +18,7 @@ sys.path.append("/".join(chemin_fichier[:-3] + ["improved_graph", "src", "layers
 
 
 from IA.PilotNet.data.ImageSteeringDB import ImageSteeringDB
-from IA.PilotNet.model.modelOrig import create
+from IA.PilotNet.model.modelOrig import createPilotNetModel
 from IA.model_keras.FolderInfos import FolderInfos
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
@@ -66,7 +66,7 @@ file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
 with tf.device('/GPU:' + "0"):
-    model = create()
+    model = createPilotNetModel()
     model.compile(optimizer="adam",loss="MSE")
 
 name = FolderInfos.base_filename + "model.dot"

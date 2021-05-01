@@ -2,7 +2,7 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Dense, Input, Flatten, BatchNormalization
 
 
-def create():
+def createPilotNetModel():
     input = Input(shape=(66, 200, 3))  # width, height, channel: 3 = RGB
 
     # Normalized input planes 3@66x200
