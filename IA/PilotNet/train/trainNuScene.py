@@ -26,6 +26,9 @@ from IA.PilotNet.markdown_summary.markdown_summary import create_summary
 from PIL import Image
 import numpy as np
 
+from tensorflow.keras import Model
+from tensorflow.keras.layers import Dense, Input
+
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -64,19 +67,28 @@ file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
 with tf.device('/GPU:' + "0"):
-    # TODO Create a model based on original (PilotNet) architecture
+    # Create a model based on original (PilotNet) architecture
     pilotNetModel = createPilotNetModel()
-    model = createNuSceneModel()
 
-    # TODO Import weights for the original model
+    # Import weights for the original model
+    # Link weights to the PilotNet model
+    pilotNetModel.load_weights("/home/smaniott/PIR/PIR/data/pilotnet/2021-04-22_20h45min29s_/2021-04-22_20h45min29s_model.h5")
 
-    # TODO Link weights to the PilotNet model
+    # Freeze base model
+    pilotNetModel.trainable = False
 
-    # TODO (Cut) Select last wanted layer of the original model
+    # (Cut) Select last wanted layer of the original model (0 is the input layer, 11 is the steering_angle output layer)
+    lastWantedLayerIndex = 10
+    lastWantedLayer = pilotNetModel.layers[lastWantedLayerIndex]
 
-    # TODO Add layers to match the outputs (NuSceneDB.labels array)
+    # Add layers to match the outputs (NuSceneDB.labels array)
+    # Length of labels array (=22) neurons Fully-connected layer
+    fullyConnectedLayer = Dense(units=len(NuSceneDB.labels))(lastWantedLayer.output)
 
-    # TODO Compile the model with given hyper parameters
+    # Build the new model based on the original input and the previously added layers
+    model = Model(inputs=[pilotNetModel.input], outputs=[fullyConnectedLayer])
+
+    # Compile the model with given hyper parameters
     model.compile(optimizer="adam",loss="MSE")
 
 name = FolderInfos.base_filename + "model.dot"
@@ -87,22 +99,22 @@ with file_writer.as_default():
     tf.summary.image(f"Modele", np.stack((image,), axis=0), step=0)
     file_writer.flush()
     callbacks = None  # Pour le debug
-    # """
+    # "
     callbacks = [
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE"], type="valid",
                      eval_rate=dataset.batch_size * 5)
     ]
-    # """
+    # "
 
 create_summary(writer=file_writer, optimizer_name="adam", optimizer_parameters={"lr":1e-3,"epsilon":1e-7}, loss="MSE",
                metriques_utilisees=[],
-               but_essai="Test du modèle original de PilotNet",
-               informations_additionnelles="",
+               but_essai="Test du nouveau modèle basé sur les poids de PilotNet/driving_dataset",
+               informations_additionnelles="Couche enlevée : output à 1 neuronne",
                id=FolderInfos.id,dataset_name="driving_dataset from PilotNet",
-               taille_x_img=455,
-               taille_y_img=256,batch_size=dataset.batch_size,
-               nb_img_tot=45407,nb_epochs=30,nb_tr_img=32325) # Calculé d'après le fichier d'annotations
+               taille_x_img=1600,
+               taille_y_img=900,batch_size=dataset.batch_size,
+               nb_img_tot=1400000,nb_epochs=30,nb_tr_img=994000) # Calculé d'après le fichier d'annotations
 with tf.device('/GPU:' + "0"):
     model.fit(dataset_tr, callbacks=callbacks)
     model.save(FolderInfos.base_filename+"model.h5")
