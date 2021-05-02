@@ -1,4 +1,5 @@
 from typing import List
+import os
 
 import scipy.misc
 import random
@@ -55,7 +56,7 @@ class NuSceneDB(object):
 
                 image_path = data_path + filename
 
-                if tf.gfile.Exists(image_path):
+                if os.path.isfile(image_path):
                     image_outputs = [0] * len(NuSceneDB.labels)
 
                     for detectedCategory in list(categories):
