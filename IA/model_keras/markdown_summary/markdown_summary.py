@@ -2,6 +2,7 @@ from typing import Dict, List
 
 from model_keras.FolderInfos import FolderInfos
 import  tensorflow as tf
+import subprocess
 
 
 def create_summary(writer: tf.summary.SummaryWriter,optimizer_name: str,nb_img_utilisees,optimizer_parameters: Dict,
@@ -13,6 +14,8 @@ def create_summary(writer: tf.summary.SummaryWriter,optimizer_name: str,nb_img_u
 
 Entrainement sur {dataset_name} ({nb_img_tot} images ; {min(nb_img_utilisees,nb_img_tot)} utilisées) avec des images de taille {taille_x_img} px par {taille_y_img} px redimensionnées à {taille_x_img_redim} px x {taille_y_img_redim} px
 Batch size de {batch_size}
+
+Code du commit {(subprocess.check_output("git rev-parse HEAD".split())).decode("utf-8").strip()}
 
 
 ## Paramètres d'entrainement
