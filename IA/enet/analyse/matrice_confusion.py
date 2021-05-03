@@ -19,7 +19,7 @@ class MakeConfusionMatrixEnet(MakeConfusionMatrix):
             for i_classe in range(self.nb_classes):
                 for batch, dest in zip([batch_true,batch_pred],["true","pred"]):
                     for seuil_threshold in self.seuils_threshold:
-                        img_threshold = cv2.threshold(batch[i_batch,:,:, i_classe],
+                        _,img_threshold = cv2.threshold(batch[i_batch,:,:, i_classe],
                                                       seuil_threshold,
                                                       maxval=1.,
                                                       type=cv2.THRESH_BINARY)

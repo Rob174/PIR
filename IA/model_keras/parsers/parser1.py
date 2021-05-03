@@ -11,6 +11,5 @@ class Parser1(Parser0):
                     '-img_w':['image_width',532,int,"Indique la gpu visible par le script tensorflow"],
                     '-lastAct':['lastActivation',"linear",str,"Indique la gpu visible par le script tensorflow"],
                     '-approxAccur':['approximationAccuracy',"none",str,"Indique la gpu visible par le script tensorflow"],
-                    '-opti':['optimizer',"adam",str,"Optimisateur"],
                     '-classWeigths':['classes_weights',"False",str,"Type de pondération des classes sous-représentées"],
                     })
