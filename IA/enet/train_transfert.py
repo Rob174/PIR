@@ -13,6 +13,7 @@ sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers
 from IA.enet.models.model_transfert import create
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.metrics import categorical_crossentropy
 
 from IA.enet.data.Nuscene_dataset_segmentation import Nuscene_dataset_segmentation
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
@@ -20,7 +21,7 @@ from tensorflow.keras.metrics import categorical_accuracy
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
 from IA.model_keras.FolderInfos import FolderInfos
-from IA.model_keras.analyse.matrices_confusion import make_matrices
+from IA.enet.analyse.matrice_confusion import MakeConfusionMatrixEnet
 from IA.model_keras.parsers.parser0 import Parser0
 import matplotlib
 matplotlib.use('Agg')
@@ -116,7 +117,7 @@ callbacks = [
 # """
 
 # with tf.device('/GPU:' + args.gpu_selected):
-with tf.device('/CPU:0'):
+with tf.device('/GPU:'+args.gpu_selected):
     model.fit(dataset_tr, callbacks=callbacks)
 
 
@@ -127,7 +128,8 @@ dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
                                                               tf.TensorShape([None, None, None,None]))) \
     .prefetch(tf.data.experimental.AUTOTUNE)
 
-with tf.device('/CPU:0'):
-    make_matrices(model,dataset_full,
-                  len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
-                  summary_writer=file_writer)
+with tf.device('/GPU:'+args.gpu_selected):
+    MakeConfusionMatrixEnet(model=model,dataset=dataset_full,
+                  nb_classes=len(dataset.correspondances_classes_index),
+                  correspondances_index_classes=dataset.correspondances_index_classes,
+                  summary_writer=file_writer)()

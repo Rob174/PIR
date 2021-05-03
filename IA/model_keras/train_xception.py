@@ -22,7 +22,7 @@ from tensorflow.keras.metrics import categorical_accuracy
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
 from IA.model_keras.FolderInfos import FolderInfos
-from IA.model_keras.analyse.matrices_confusion import make_matrices
+from IA.model_keras.analyse.matrices_confusion import MakeConfusionMatrix
 matplotlib.use('Agg')
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -179,6 +179,6 @@ dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
     .prefetch(tf.data.experimental.AUTOTUNE)
 
 with tf.device('/GPU:' + args.gpu_selected):
-    make_matrices(model,dataset_full,
+    MakeConfusionMatrix(model,dataset_full,
                   len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
-                  summary_writer=file_writer)
+                  summary_writer=file_writer)()

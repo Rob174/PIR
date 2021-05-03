@@ -8,21 +8,28 @@ from numpy.core.defchararray import add as addStr
 
 from IA.model_keras.FolderInfos import FolderInfos
 
-
-def make_matrices(model,dataset,nb_classes,correspondances_index_classes,summary_writer=None):
+class MakeConfusionMatrix:
+    def __init__(self,model,dataset,nb_classes,correspondances_index_classes,summary_writer):
+        self.model = model
+        self.dataset = dataset
+        self.nb_classes = nb_classes
+        self.correspondances_index_classes = correspondances_index_classes
+        self.summary_writer = summary_writer
+    def add_sample(self,batch_img, batch_true):
+        batch_pred = self.model.predict(batch_img)
+        batch_true = np.array(np.round(batch_true[:, 0, :].numpy()), dtype=np.int)
+        batch_pred = np.array(np.round(batch_pred[:,0,:]),dtype=np.int)
+        for i_batch in range(len(batch_pred)):
+            for i_classe in range(self.nb_classes):
+                self.matrices_confusion[i_classe]["true"].append(batch_true[i_batch, i_classe])
+                self.matrices_confusion[i_classe]["pred"].append(batch_pred[i_batch, i_classe])
+    def __call__(self):
         # Constitution de la matrice de confusion finale
-        matrices_confusion = [{"true":[],"pred":[]} for _ in range(nb_classes)]
-        for batch_img, batch_true in dataset:
-            # batch_pred = np.random.choice([i for i in range(100) if i<10 or i > 90],batch_true.shape) # Pour test
-            batch_pred = model.predict(batch_img)
-            batch_true = np.array(np.round(batch_true[:,0,:].numpy()),dtype=np.int)
-            # batch_true = np.array(np.round(batch_true[:,0,:]),dtype=np.int)
-            for i_batch in range(len(batch_pred)):
-                for i_classe in range(nb_classes):
-                    matrices_confusion[i_classe]["true"].append(batch_true[i_batch,i_classe])
-                    matrices_confusion[i_classe]["pred"].append(batch_pred[i_batch, i_classe])
+        self.matrices_confusion = [{"true":[],"pred":[]} for _ in range(self.nb_classes)]
+        for batch_img, batch_true in self.dataset:
+            self.add_sample(batch_img,batch_true)
         # Création des matrices de confusion (1 par classe)
-        for i,classe_data in enumerate(matrices_confusion):
+        for i,classe_data in enumerate(self.matrices_confusion):
             labels = list({val for val in (classe_data["true"] + classe_data["pred"])})
             matrice_confusion_petite = confusion_matrix(y_true=classe_data["true"],
                                                  y_pred=classe_data["pred"],
@@ -45,7 +52,7 @@ def make_matrices(model,dataset,nb_classes,correspondances_index_classes,summary
             top3voisins_precision = np.round(top3voisins_precision,decimals=2)
             fig = plt.figure(figsize=(20,20))
             plt.imshow(matrice_confusion_prct)
-            plt.title(f"Matrice de confusion de la classe {i} : {correspondances_index_classes[i]} \nPrécision : {matrice_confusion_prct[-1,-1]:.2f} % ; Top-3 précision : {top3voisins_precision:.2f} %")
+            plt.title(f"Matrice de confusion de la classe {i} : {self.correspondances_index_classes[i]} \nPrécision : {matrice_confusion_prct[-1,-1]:.2f} % ; Top-3 précision : {top3voisins_precision:.2f} %")
             ax = plt.gca()
             ax.xaxis.set_label_position('top')
             ax.xaxis.tick_top()
@@ -67,10 +74,10 @@ def make_matrices(model,dataset,nb_classes,correspondances_index_classes,summary
             data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             data = np.stack((data,), axis=0)
-            if summary_writer is not None:
-                with summary_writer.as_default():
-                    tf.summary.image(f"matrice_confusion_{correspondances_index_classes[i]}", data, step=0)
-                    summary_writer.flush()
+            if self.summary_writer is not None:
+                with self.summary_writer.as_default():
+                    tf.summary.image(f"matrice_confusion_{self.correspondances_index_classes[i]}", data, step=0)
+                    self.summary_writer.flush()
             array_matrice = np.array([['' for _ in range(len(labels)+2)] for _ in range(len(labels)+3)],dtype="U25")
             array_matrice[0,:] = np.array(['Valeurs predites']+ [str(i) for i in labels]+[''],dtype=np.str)
             array_matrice[1,0] = "Valeurs reelles"
@@ -83,10 +90,10 @@ def make_matrices(model,dataset,nb_classes,correspondances_index_classes,summary
             )
             array_matrice[-1,-1] = str(matrice_confusion[-1,-1]) +"\n"+ str(np.round(matrice_confusion_prct[-1,-1],decimals=2))+"%"
             df = pd.DataFrame(array_matrice)
-            df.to_csv(FolderInfos.base_filename+f"matrice_confusion_{correspondances_index_classes[i]}.csv")
+            df.to_csv(FolderInfos.base_filename+f"matrice_confusion_{self.correspondances_index_classes[i]}.csv")
 
 if __name__ == "__main__":
-    make_matrices(None,[(np.random.randint(0,1,(10,255,255,3)),np.random.choice([i for i in range(100) if i<10 or i > 90],(10,1,23)))
+    MakeConfusionMatrix(None,[(np.random.randint(0,1,(10,255,255,3)),np.random.choice([i for i in range(100) if i<10 or i > 90],(10,1,23)))
                         for _ in range(5000)],nb_classes=23,
                   correspondances_index_classes={0: 'animal',
                                                  1: 'human.pedestrian.adult',
@@ -110,7 +117,7 @@ if __name__ == "__main__":
                                                  19: 'vehicle.emergency.police',
                                                  20: 'vehicle.motorcycle',
                                                  21: 'vehicle.trailer',
-                                                 22: 'vehicle.truck'},summary_writer=None)
+                                                 22: 'vehicle.truck'},summary_writer=None)()
     plt.show()
 
 

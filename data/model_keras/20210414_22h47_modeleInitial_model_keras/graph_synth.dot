@@ -1,4 +1,5 @@
 digraph Main {
+    rankdir=LR
 	subgraph cluster_50 {
 		graph [fillcolor=white peripheries=0 style=filled]
 		1 [label="{{Input 1|{{Shape|(100, 178, 3)}}}}" color=yellow fillcolor=white shape=record style=filled]

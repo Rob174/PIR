@@ -21,9 +21,8 @@ class EvalCallback(tf.keras.callbacks.Callback):
 
     def on_train_batch_end(self, batch, logs=None):
         if self.step_number % self.eval_rate == 0:
-            batch = list(self.dataset.take(1).as_numpy_iterator())[0]
-            print(len(batch))
-            [batch_imgs, batch_labels] = batch
+            batch1 = list(self.dataset.take(1).as_numpy_iterator())[0]
+            [batch_imgs, batch_labels] = batch1
             test_output = self.model.test_on_batch(batch_imgs, batch_labels)
 
             items_to_write = {}

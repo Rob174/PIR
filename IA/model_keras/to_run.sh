@@ -1,0 +1,1 @@
+nohup bash -c "python3 /home/rmoine/Documents/PIRfolder/IA/enet/train_transfert.py -bs=10 -gpu=2 -opti=adam -nbImg=7500 -nbEpochs=1 &> /home/rmoine/Documents/PIRfolder/IA/enet/logs"
