@@ -46,19 +46,19 @@ dataset = NuSceneDB(BATCH_SIZE)
 dataset_tr = tf.data.Dataset.from_generator(dataset.train_batch_generator,
                                             output_types=(tf.float32, tf.float32),
                                             output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                           tf.TensorShape([None])))\
+                                                           tf.TensorShape([None, None])))\
     .prefetch(tf.data.experimental.AUTOTUNE).repeat(30)
 
 dataset_tr_eval = tf.data.Dataset.from_generator(dataset.train_batch_generator,
                                             output_types=(tf.float32, tf.float32),
                                             output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                           tf.TensorShape([None])))\
+                                                           tf.TensorShape([None, None])))\
     .prefetch(tf.data.experimental.AUTOTUNE).repeat(30)
 dataset_valid = tf.data.Dataset.from_generator(dataset.val_batch_generator,
                                             output_types=(tf.float32, tf.float32),
                                             output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                           tf.TensorShape([None])))\
-    .prefetch(tf.data.experimental.AUTOTUNE).repeat() # Sans argument : répète à l'infini
+                                                           tf.TensorShape([None, None])))\
+    .prefetch(tf.data.experimental.AUTOTUNE).repeat()  # Sans argument : répète à l'infini
 
 FolderInfos.init(subdir="nuscene_pilotnet")
 
@@ -78,18 +78,19 @@ with tf.device('/GPU:' + "0"):
     pilotNetModel.trainable = False
 
     # (Cut) Select last wanted layer of the original model (0 is the input layer, 11 is the steering_angle output layer)
-    lastWantedLayerIndex = 10
+    lastWantedLayerIndex = 9  # or -3 for the second last
     lastWantedLayer = pilotNetModel.layers[lastWantedLayerIndex]
 
     # Add layers to match the outputs (NuSceneDB.labels array)
-    # Length of labels array (=22) neurons Fully-connected layer
+    # Length of labels array (=23) neurons Fully-connected layer
     fullyConnectedLayer = Dense(units=len(NuSceneDB.labels))(lastWantedLayer.output)
 
     # Build the new model based on the original input and the previously added layers
     model = Model(inputs=[pilotNetModel.input], outputs=[fullyConnectedLayer])
 
     # Compile the model with given hyper parameters
-    model.compile(optimizer="adam",loss="MSE")
+    print(model.summary())
+    model.compile(optimizer="adam", loss="MSE", metrics="accuracy")
 
 name = FolderInfos.base_filename + "model.dot"
 name_png = FolderInfos.base_filename + "model.png"
@@ -99,22 +100,29 @@ with file_writer.as_default():
     tf.summary.image(f"Modele", np.stack((image,), axis=0), step=0)
     file_writer.flush()
     callbacks = None  # Pour le debug
-    # "
+    # """
     callbacks = [
         EvalCallback(file_writer, dataset_tr_eval, dataset.batch_size, ["loss_MSE"], type="tr"),
         EvalCallback(file_writer, dataset_valid, dataset.batch_size, ["loss_MSE"], type="valid",
                      eval_rate=dataset.batch_size * 5)
     ]
-    # "
+    # """
 
 create_summary(writer=file_writer, optimizer_name="adam", optimizer_parameters={"lr":1e-3,"epsilon":1e-7}, loss="MSE",
                metriques_utilisees=[],
                but_essai="Test du nouveau modèle basé sur les poids de PilotNet/driving_dataset",
-               informations_additionnelles="Couche enlevée : output à 1 neuronne",
+               informations_additionnelles="Couches enlevées : output à 1 neuronne et FC3",
                id=FolderInfos.id,dataset_name="driving_dataset from PilotNet",
                taille_x_img=1600,
                taille_y_img=900,batch_size=dataset.batch_size,
-               nb_img_tot=1400000,nb_epochs=30,nb_tr_img=994000) # Calculé d'après le fichier d'annotations
+               nb_img_tot=dataset.dataset_size,nb_epochs=15,nb_tr_img=dataset.training_dataset_size) # Calculé d'après le fichier d'annotations
 with tf.device('/GPU:' + "0"):
+    print("===================================")
+    print("Starting training")
+    print("===================================")
     model.fit(dataset_tr, callbacks=callbacks)
+    print("===================================")
+    print("Training has ended")
+    print("===================================")
+
     model.save(FolderInfos.base_filename+"model.h5")
