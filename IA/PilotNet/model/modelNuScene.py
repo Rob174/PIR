@@ -53,7 +53,7 @@ def createNuSceneModel():
     # 10 neurons Fully-connected layer
     fullyConnectedLayer = Dense(units=10)(fullyConnectedLayer)
 
-    # Length of labels array (=22) neurons Fully-connected layer
+    # Length of labels array (=23) neurons Fully-connected layer
     fullyConnectedLayer = Dense(units=len(NuSceneDB.labels))(fullyConnectedLayer)
 
     # Output: vehicle control
