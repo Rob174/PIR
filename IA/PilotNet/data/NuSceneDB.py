@@ -93,15 +93,6 @@ class NuSceneDB(object):
         self.imgs_path = imgs
         self.outputs_values = outputs
 
-        self.train_imgs_path: List[str] = imgs[:int(self.num_images * 0.8)]
-        self.train_outputs_values: List[float] = outputs[:int(self.num_images * 0.8)]
-
-        self.val_imgs_path: List[str] = imgs[-int(self.num_images * 0.2):]
-        self.val_outputs_values: List[float] = outputs[-int(self.num_images * 0.2):]
-
-        self.num_train_images = len(self.train_imgs_path)
-        self.num_val_images = len(self.val_imgs_path)
-
     def train_batch_generator(self):
         batch_imgs = []
         batch_outputs = []
@@ -138,4 +129,15 @@ class NuSceneDB(object):
             if len(batch_imgs) % self.batch_size == 0 and len(batch_imgs) > 0:
                 batches = np.stack(batch_imgs, axis=0), np.stack(batch_outputs, axis=0)
                 batch_imgs, batch_outputs = [], []
+                yield batches
+
+    def getNextBatchFullDataset(self):
+        bufferLabel, bufferImg = [], []
+        full_dataset = list(range(int(len(self.imgs_path))))
+        for i in full_dataset:
+            bufferImg.append(self.imgs_path[i])
+            bufferLabel.append(self.outputs_values[i])
+            if len(bufferImg) % self.batch_size == 0 and i > 0:
+                batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
+                bufferLabel, bufferImg = [], []
                 yield batches
