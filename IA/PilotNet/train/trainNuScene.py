@@ -130,7 +130,7 @@ with file_writer.as_default():
     ]
     # """
 
-optimizer_parameters = {"lr":optimizer.lr,"epsilon":optimizer.epsilon} if optimizer_name == "adam" else {"lr":optimizer.lr,"momentum":optimizer.momentum}
+optimizer_parameters = {"lr":optimizer.lr.numpy(),"epsilon":optimizer.epsilon} if optimizer_name == "adam" else {"lr":optimizer.lr.numpy(),"momentum":optimizer.momentum.numpy()}
 
 create_summary(writer=file_writer, optimizer_name=optimizer_name, optimizer_parameters=optimizer_parameters, loss=LOSS,
                metriques_utilisees=["accuracy"],
