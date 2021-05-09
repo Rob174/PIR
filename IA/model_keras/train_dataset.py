@@ -93,6 +93,12 @@ def loss_mse(y_true,y_pred):
 
     return tf.math.reduce_mean(tf.pow(y_true_label-y_pred_extracted,2)*y_true_poids)
 
+if args.loss == "mse":
+    loss = loss_mse
+    loss_descr = "\nMSE avec pondération possible\n"
+else:
+    loss = args.loss
+    loss_descr = f"\nLoss {args.loss}\n"
 with tf.device('/GPU:' + args.gpu_selected):
     model = make_model((dataset.image_shape[1], dataset.image_shape[0], 3,),
                        num_classes=len(dataset.correspondances_classes_index.keys()),
@@ -120,7 +126,8 @@ with file_writer.as_default():
 
 texte_poids_par_classe = "\n\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
 texte_poids_par_classe_eff= "\n\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
-informations_additionnelles = "\n\nUtilisation d'une métrique custom pour corriger cela\n\n"+ "Normalisation des images par 255 avant passage dans le réseau"
+informations_additionnelles = "\n\nUtilisation d'une métrique custom pour corriger cela\n\n"
+informations_additionnelles +="Normalisation des images par 255 avant passage dans le réseau"
 informations_additionnelles += f"\n\nGarde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
 
 if classes_weights == "class":
@@ -149,7 +156,7 @@ if args.augmentation == "t":
     informations_additionnelles += "\n\nAugmentations : \n"+"\n- ".join(list(map(
         lambda x:x.__name__+", paramètres : "+str(x.augm_params),dataset.augmentations)))
 ## Résumé des paramètres d'entrainement dans un markdown afficher dans le tensorboard
-create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_parameters=optimizer_params, loss="MSE",
+create_summary(writer=file_writer, optimizer_name=args.optimizer, optimizer_parameters=optimizer_params, loss=loss_descr,
                metriques_utilisees=[f"pourcent d'erreur de" +
                                     f" prediction en appliquant la fonction" +
                                     f" {args.approximationAccuracy} " +
