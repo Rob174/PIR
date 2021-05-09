@@ -20,6 +20,9 @@ class MakeConfusionMatrix:
             self.fonction_approx = np.round
         elif mode_approx == "int":
             self.fonction_approx = np.floor
+        elif mode_approx == "none":
+            self.fonction_approx = lambda x:x
+
     def add_sample(self,batch_img, batch_true):
         batch_pred = self.model.predict(batch_img)
         batch_true = np.array(self.fonction_approx(batch_true[:, 0, :].numpy()), dtype=np.int)
