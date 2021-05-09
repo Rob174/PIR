@@ -7,6 +7,9 @@ class Nuscene_dataset_normalized(Nuscene_dataset):
         super(Nuscene_dataset_normalized, self).__init__(*args,**kargs)
     def getLabels(self, index_image):
         labels = super(Nuscene_dataset_normalized, self).getLabels(index_image)
-        return labels / np.sum(labels)
+        somme = np.sum(labels)
+        if somme  == 0:
+            return None
+        return labels / somme
     def dataset_stats(self,summary_writer):
         pass

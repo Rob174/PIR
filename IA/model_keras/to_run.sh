@@ -105,12 +105,14 @@ nohup bash -c "python3 train_dataset.py -bs=10 -gpu=3 -approxAccur=round -opti=a
 
 # Pondération
 
-nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=round -opti=adam -nbImg=7500 -classWeigths=class &> logsAdamsz10" &
-nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=round -opti=adam -nbImg=7500 -classWeigths=classEff &> logsAdamsz11" &
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=round -opti=adam -nbImg=7500 -classWeigths=class &> logsAdamsz10" & # TODO doing
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=3 -approxAccur=round -opti=adam -nbImg=7500 -classWeigths=classEff &> logsAdamsz11" & # TODO doing 2021-05-09_13h42min19s
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=int -opti=adam -nbImg=7500 -classWeigths=class &> logsAdamsz12" &
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=int -opti=adam -nbImg=7500 -classWeigths=classEff &> logsAdamsz13" &
 
 #  Avec sigmoid et softmax
 
-nohup bash -c "python3 train_dataset.py -gpu=0 -nbImg=7500 -lastAct=sigmoid &> logsAdamsz14" &
-nohup bash -c "python3 train_dataset.py -gpu=0 -nbImg=7500 -lastAct=softmax &> logsAdamsz15" &
+nohup bash -c "python3 train_dataset.py -gpu=0 -nbImg=7500 -lastAct=sigmoid &> logsAdamsz14" & # TODO DONE 2021-05-09_03h21min22s
+nohup bash -c "python3 train_dataset.py -gpu=2 -nbImg=7500 -lastAct=softmax &> logsAdamsz15" & # TODO DONE 2021-05-09_13h40min55s
+
+2021-05-05_21h19min48s|2021-05-09_03h21min22s|2021-05-09_13h40min55s

@@ -65,7 +65,6 @@ def approx_accuracy(modeApprox="none"):
         fct_approx = tf.math.floor
     else:
         raise Exception("Unknown approximation function %s" % modeApprox)
-
     def approx_accuracy_round(y_true, y_pred):
         nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
         # Extraction des informations des tenseurs
@@ -78,8 +77,8 @@ def approx_accuracy(modeApprox="none"):
         return tf.reduce_mean(tf.cast(tf.equal(y_true_label, fct_approx(y_pred_extracted)),dtype=tf.float32))
 
     return approx_accuracy_round
-
 def loss_mse(y_true,y_pred):
+    tf.executing_eagerly()
     nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
     # Extraction des informations des tenseurs
     y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[dataset.batch_size,1,nb_classes])

@@ -196,6 +196,8 @@ class Nuscene_dataset:
         :return: np.array, shape (2,#classes)
         """
         label = self.getLabels(index)
+        if label is None:
+            return None
         return np.stack((label, np.ones(label.shape)), axis=0)
 
     def getLabelsWithWeightsPerClass(self, index, dataset="tr"):
@@ -206,6 +208,8 @@ class Nuscene_dataset:
         :return: np.array, shape (2,#classes)
         """
         label = self.getLabels(index)
+        if label is None:
+            return None
         poids = np.zeros(label.shape)
         if dataset == "tr":
             dico_stat = self.stat_per_class_tr
@@ -232,6 +236,8 @@ class Nuscene_dataset:
         :return: np.array, shape (2,#classes)
         """
         label = self.getLabels(index)
+        if label is None:
+            return None
         poids = np.zeros(label.shape)
         if dataset == "tr":
             dico_stat = self.stat_per_class_eff_tr
@@ -261,8 +267,12 @@ class Nuscene_dataset:
         bufferLabel, bufferImg = [], []
         random.shuffle(self.dataset_tr)
         for i in self.dataset_tr[:self.limit_nb_tr]:
-            bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.get_labels_fct(i,dataset="tr"))
+            img = self.getImage(i)
+            lab = self.get_labels_fct(i,dataset="tr")
+            if lab is None:
+                continue
+            bufferImg.append(img)
+            bufferLabel.append(lab)
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
@@ -280,8 +290,12 @@ class Nuscene_dataset:
         random.shuffle(self.dataset_valid)
         while True:
             for i in self.dataset_valid:
-                bufferImg.append(self.getImage(i))
-                bufferLabel.append(self.get_labels_fct(i,dataset="valid"))
+                img = self.getImage(i)
+                lab = self.get_labels_fct(i,dataset="valid")
+                if lab is None:
+                    continue
+                bufferImg.append(img)
+                bufferLabel.append(lab)
                 if len(bufferImg) % self.batch_size == 0 and i > 0:
                     batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                     bufferLabel, bufferImg = [], []
@@ -291,8 +305,12 @@ class Nuscene_dataset:
         bufferLabel, bufferImg = [], []
         full_dataset = list(range(int(len(self.content_dataset))))
         for i in full_dataset:
-            bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.get_labels_fct(i, dataset="valid" if i in self.dataset_valid else "tr"))
+            img = self.getImage(i)
+            lab = self.get_labels_fct(i, dataset="valid" if i in self.dataset_valid else "tr")
+            if lab is None:
+                continue
+            bufferImg.append(img)
+            bufferLabel.append(lab)
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
