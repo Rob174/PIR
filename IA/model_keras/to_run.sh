@@ -110,4 +110,4 @@ nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=round -opti=a
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=int -opti=adam -nbImg=7500 -classWeigths=class &> logsAdamsz12" &
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=int -opti=adam -nbImg=7500 -classWeigths=classEff &> logsAdamsz13" &
 
-#  
+#  Avec sigmoid et softmax

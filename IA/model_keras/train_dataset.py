@@ -45,7 +45,7 @@ file_writer.set_as_default()
 
 
 classes_weights = args.classes_weights
-if args.lastActivation == "sigmoid" or args.lastActivation == "categorical_cross_entropy":
+if args.lastActivation == "sigmoid" or args.lastActivation == "softmax":
     dataset = Nuscene_dataset_normalized(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
                               batch_size=args.batch_size,with_weights=classes_weights,
                               summary_writer=file_writer,augmentation=args.augmentation)
@@ -201,13 +201,14 @@ with tf.device('/GPU:' + args.gpu_selected):
     model.fit(dataset_tr, callbacks=callbacks)
 
 # Evaluation finale
-dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
-                                               output_types=(tf.float32, tf.float32),
-                                               output_shapes=(tf.TensorShape([None, None, None, None]),
-                                                              tf.TensorShape([None, None, None]))) \
-    .prefetch(tf.data.experimental.AUTOTUNE)
+if args.lastActivation != "sigmoid" and args.lastActivation != "softmax":
+    dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
+                                                   output_types=(tf.float32, tf.float32),
+                                                   output_shapes=(tf.TensorShape([None, None, None, None]),
+                                                                  tf.TensorShape([None, None, None]))) \
+        .prefetch(tf.data.experimental.AUTOTUNE)
 
-with tf.device('/GPU:' + args.gpu_selected):
-    MakeConfusionMatrix(model,dataset_full,
-                  len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
-                  summary_writer=file_writer,mode_approx=args.approximationAccuracy)()
+    with tf.device('/GPU:' + args.gpu_selected):
+        MakeConfusionMatrix(model,dataset_full,
+                      len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
+                      summary_writer=file_writer,mode_approx=args.approximationAccuracy)()
