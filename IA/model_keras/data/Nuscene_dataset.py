@@ -188,24 +188,24 @@ class Nuscene_dataset:
                     label[self.correspondances_classes_index[k]] += 1
         return label
 
-    def getLabelsWithUnitWeight(self, index_image, dataset="tr"):
+    def getLabelsWithUnitWeight(self, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on ne pondère pas chaque classe
         :param index_image: index de l'image dans le fichier json du dataset Nuscene
         :return: np.array, shape (2,#classes)
         """
-        label = self.getLabels(index_image)
+        label = self.getLabels()
         return np.stack((label, np.ones(label.shape)), axis=0)
 
-    def getLabelsWithWeightsPerClass(self, index_image, dataset="tr"):
+    def getLabelsWithWeightsPerClass(self, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on pondère chaque classe par son pourcentage d'apparition dans le dataset pour donner plus de poids aux classes sous-représentées
         :param index_image: index de l'image dans le fichier json du dataset Nuscene
         :return: np.array, shape (2,#classes)
         """
-        label = self.getLabels(index_image)
+        label = self.getLabels()
         poids = np.zeros(label.shape)
         if dataset == "tr":
             dico_stat = self.stat_per_class_tr
@@ -221,7 +221,7 @@ class Nuscene_dataset:
         poids /= total
         return np.stack((label, poids), axis=0)
 
-    def getLabelsWithWeightsPerClassEff(self, index_image, dataset="tr"):
+    def getLabelsWithWeightsPerClassEff(self, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on pondère chaque classe par la fréquence de prédiction de cet effectif pour chaque classe :
@@ -231,7 +231,7 @@ class Nuscene_dataset:
         :param index_image: index de l'image dans le fichier json du dataset Nuscene
         :return: np.array, shape (2,#classes)
         """
-        label = self.getLabels(index_image)
+        label = self.getLabels()
         poids = np.zeros(label.shape)
         if dataset == "tr":
             dico_stat = self.stat_per_class_eff_tr
@@ -262,7 +262,7 @@ class Nuscene_dataset:
         random.shuffle(self.dataset_tr)
         for i in self.dataset_tr[:self.limit_nb_tr]:
             bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.get_labels_fct(i,num_batch=len(bufferLabel),dataset="tr"))
+            bufferLabel.append(self.get_labels_fct(i,dataset="tr"))
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
@@ -281,7 +281,7 @@ class Nuscene_dataset:
         while True:
             for i in self.dataset_valid:
                 bufferImg.append(self.getImage(i))
-                bufferLabel.append(self.get_labels_fct(i,num_batch=len(bufferLabel),dataset="valid"))
+                bufferLabel.append(self.get_labels_fct(i,dataset="valid"))
                 if len(bufferImg) % self.batch_size == 0 and i > 0:
                     batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                     bufferLabel, bufferImg = [], []
@@ -292,7 +292,7 @@ class Nuscene_dataset:
         full_dataset = list(range(int(len(self.content_dataset))))
         for i in full_dataset:
             bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.get_labels_fct(i,num_batch=len(bufferLabel), dataset="valid" if i in self.dataset_valid else "tr"))
+            bufferLabel.append(self.get_labels_fct(i, dataset="valid" if i in self.dataset_valid else "tr"))
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
