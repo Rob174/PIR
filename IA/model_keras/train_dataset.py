@@ -10,20 +10,23 @@ sys.path.append("/".join(chemin_fichier[:-2]))
 sys.path.append("/".join(chemin_fichier[:-3]))
 sys.path.append("/".join(chemin_fichier[:-2] + ["improved_graph", "src", "layers"]))
 
+from IA.model_keras.parsers.parser2 import Parser2
+args = Parser2()()
+os.environ["CUDA_VISIBLE_DEVICES"]=args.gpu_selected
+args.gpu_selected = "0"
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD
 
 from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
 from IA.model_keras.model.model_orig import make_model
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
-from tensorflow.keras.metrics import categorical_accuracy
-from IA.model_keras.parsers.parser2 import Parser2
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
 from IA.model_keras.callbacks.EvalCallback import EvalCallback
 from IA.model_keras.FolderInfos import FolderInfos
 from IA.model_keras.analyse.matrices_confusion import MakeConfusionMatrix
 
 physical_devices = tf.config.list_physical_devices('GPU')
+print(physical_devices)
 for device in physical_devices:
     try:
         tf.config.experimental.set_memory_growth(device, True)
@@ -31,7 +34,6 @@ for device in physical_devices:
         # Invalid device or cannot modify virtual devices once initialized.
         pass
 
-args = Parser2()()
 
 FolderInfos.init(subdir="model_keras")
 
@@ -51,9 +53,9 @@ def approx_accuracy(modeApprox="none"):
     fct_approx = None
     if modeApprox == "none":
         fct_approx = lambda x: x
-    elif args.approximationAccuracy == "round":
+    elif modeApprox == "round":
         fct_approx = tf.math.round
-    elif args.approximationAccuracy == "int":
+    elif modeApprox == "int":
         fct_approx = tf.math.floor
     else:
         raise Exception("Unknown approximation function %s" % modeApprox)
@@ -67,7 +69,7 @@ def approx_accuracy(modeApprox="none"):
         y_true_label = tf.slice(y_true,[0,0,0],size=[dataset.batch_size,1,nb_classes])
         y_true_label = tf.reshape(y_true_label,[dataset.batch_size,nb_classes])
 
-        return categorical_accuracy(y_true_label, fct_approx(y_pred_extracted))
+        return tf.reduce_mean(tf.cast(tf.equal(y_true_label, fct_approx(y_pred_extracted)),dtype=tf.float32))
 
     return approx_accuracy_round
 
@@ -113,7 +115,7 @@ with file_writer.as_default():
 texte_poids_par_classe = "\n\nPondération de chaque image suivant le nombre d'apparition de chaque classe du vecteur "
 texte_poids_par_classe_eff= "\n\nPondération de chaque label suivant l'effectif d'apparition de chaque classe"
 informations_additionnelles = "\n\nUtilisation d'une métrique custom pour corriger cela\n\n"+ "Normalisation des images par 255 avant passage dans le réseau"
-informations_additionnelles += f"Garde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
+informations_additionnelles += f"\n\nGarde un objet si une fois l'image redimensionnée il fait plus de {dataset.taille_mini_px} pixels (avec sa dimension minimale)"
 
 if classes_weights == "class":
     informations_additionnelles += texte_poids_par_classe
@@ -136,7 +138,7 @@ elif args.activation == "mish":
     informations_additionnelles += "\n\nActivation mish sur toutes les couches"
 else:
     raise Exception(f"Unknow arg {args.activation}")
-
+informations_additionnelles += f"\n\nNombre de modules utilisés : {args.nb_modules}"
 if args.augmentation == "t":
     informations_additionnelles += "\n\nAugmentations : \n"+"\n- ".join(list(map(
         lambda x:x.__name__+", paramètres : "+str(x.augm_params),dataset.augmentations)))
@@ -195,4 +197,4 @@ dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
 with tf.device('/GPU:' + args.gpu_selected):
     MakeConfusionMatrix(model,dataset_full,
                   len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
-                  summary_writer=file_writer)()
+                  summary_writer=file_writer,mode_approx=args.approximationAccuracy)()

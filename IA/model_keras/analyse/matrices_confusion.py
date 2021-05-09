@@ -9,16 +9,21 @@ from numpy.core.defchararray import add as addStr
 from IA.model_keras.FolderInfos import FolderInfos
 
 class MakeConfusionMatrix:
-    def __init__(self,model,dataset,nb_classes,correspondances_index_classes,summary_writer):
+    def __init__(self,model,dataset,nb_classes,correspondances_index_classes,summary_writer,mode_approx):
         self.model = model
         self.dataset = dataset
         self.nb_classes = nb_classes
         self.correspondances_index_classes = correspondances_index_classes
         self.summary_writer = summary_writer
+        self.fonction_approx = np.round
+        if mode_approx == "round":
+            self.fonction_approx = np.round
+        elif mode_approx == "int":
+            self.fonction_approx = np.floor
     def add_sample(self,batch_img, batch_true):
         batch_pred = self.model.predict(batch_img)
-        batch_true = np.array(np.round(batch_true[:, 0, :].numpy()), dtype=np.int)
-        batch_pred = np.array(np.round(batch_pred[:,0,:]),dtype=np.int)
+        batch_true = np.array(self.fonction_approx(batch_true[:, 0, :].numpy()), dtype=np.int)
+        batch_pred = np.array(self.fonction_approx(batch_pred[:,0,:]),dtype=np.int)
         for i_batch in range(len(batch_pred)):
             for i_classe in range(self.nb_classes):
                 self.matrices_confusion[i_classe]["true"].append(batch_true[i_batch, i_classe])

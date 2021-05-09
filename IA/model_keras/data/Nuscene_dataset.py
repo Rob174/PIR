@@ -262,7 +262,7 @@ class Nuscene_dataset:
         random.shuffle(self.dataset_tr)
         for i in self.dataset_tr[:self.limit_nb_tr]:
             bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.get_labels_fct(i,dataset="tr"))
+            bufferLabel.append(self.get_labels_fct(i,num_batch=len(bufferLabel),dataset="tr"))
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []

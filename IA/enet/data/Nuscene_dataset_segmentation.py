@@ -26,7 +26,7 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
         #     ax.set_title(f"Statistiques label {self.correspondances_index_classes[]} du dataset {dataset_name}")
         pass # TODO : faire les stats mais par nb de pixels de chaque classe cette fois-ci
 
-    def getLabels(self, index_image,*args,**kargs):
+    def getLabels(self, index_image,num_batch=None,*args,**kargs):
         """
         Récupération et création des labels d'index index_image dans le fichier json du dataset Nuscene
         :param index_image: index de l'image dans le fichier json des annotations de Nuscene
@@ -45,7 +45,7 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
                 coin2_transfo = np.array(matrice_scale_down.dot(coin2),dtype=np.int)
                 if abs(coin1_transfo[0] - coin2_transfo[0]) > self.taille_mini_px and abs(
                         coin1_transfo[1] - coin2_transfo[1]) > self.taille_mini_px:
-                    label[coin1_transfo[0]:coin2_transfo[0],
-                          coin1_transfo[1]:coin2_transfo[1],
+                    label[coin1_transfo[1]:coin2_transfo[1],
+                          coin1_transfo[0]:coin2_transfo[0],
                           self.correspondances_classes_index[nom_classe]] = 1
         return label

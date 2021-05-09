@@ -23,7 +23,7 @@ class MakeConfusionMatrixEnet(MakeConfusionMatrix):
                                                       seuil_threshold,
                                                       maxval=1.,
                                                       type=cv2.THRESH_BINARY)
-                        img_threshold = np.array(img_threshold,dtype=np.uint8)
+                        img_threshold = np.array(img_threshold*255,dtype=np.uint8)
                         nb_contours = len(cv2.findContours(img_threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE))
                         self.matrices_confusion[i_classe][dest][seuil_threshold].append(nb_contours)
     def __call__(self):
