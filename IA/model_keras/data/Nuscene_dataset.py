@@ -281,7 +281,7 @@ class Nuscene_dataset:
         while True:
             for i in self.dataset_valid:
                 bufferImg.append(self.getImage(i))
-                bufferLabel.append(self.get_labels_fct(i,dataset="valid"))
+                bufferLabel.append(self.get_labels_fct(i,num_batch=len(bufferLabel),dataset="valid"))
                 if len(bufferImg) % self.batch_size == 0 and i > 0:
                     batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                     bufferLabel, bufferImg = [], []
@@ -292,7 +292,7 @@ class Nuscene_dataset:
         full_dataset = list(range(int(len(self.content_dataset))))
         for i in full_dataset:
             bufferImg.append(self.getImage(i))
-            bufferLabel.append(self.get_labels_fct(i, dataset="valid" if i in self.dataset_valid else "tr"))
+            bufferLabel.append(self.get_labels_fct(i,num_batch=len(bufferLabel), dataset="valid" if i in self.dataset_valid else "tr"))
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []

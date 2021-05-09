@@ -102,3 +102,12 @@ nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=round -opti=a
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=3 -approxAccur=round -opti=adam -nbImg=7500 -nbEpochs=1 -eps=1e-7 -lr=1e-1 &> logsAdams17" & # TODO : doing 2021-05-06_00h19min21s
 
 # Regex 2021-05-05_21h04min24s|2021-05-06_00h15min22s|2021-05-06_00h17min08s|2021-05-06_00h17min28s|2021-05-06_00h19min21s|2021-05-04_20h15min51s
+
+# Pondération
+
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=round -opti=adam -nbImg=7500 -classWeigths=class &> logsAdamsz10" &
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=round -opti=adam -nbImg=7500 -classWeigths=classEff &> logsAdamsz11" &
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=int -opti=adam -nbImg=7500 -classWeigths=class &> logsAdamsz12" &
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=int -opti=adam -nbImg=7500 -classWeigths=classEff &> logsAdamsz13" &
+
+#  
