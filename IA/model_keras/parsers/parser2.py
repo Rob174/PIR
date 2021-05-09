@@ -13,5 +13,6 @@ class Parser2(Parser1):
                                          "Indique la gpu visible par le script tensorflow"],
                             '-dptRate': ['dropout_rate', "0.5", str, "Indique la gpu visible par le script tensorflow"],
                             '-regMod': ['regularize_modules', "n", str, "Indique le nb de passage du dataset"],
-                            '-activ': ['activation', "relu", str, "Indique le nb de passage du dataset"]})
+                            '-activ': ['activation', "relu", str, "Indique le nb de passage du dataset"],
+                            "-loss":['loss',"mse",str,"Choix de la loss"]})
 

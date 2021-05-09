@@ -18,6 +18,7 @@ import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD
 
 from IA.model_keras.data.Nuscene_dataset import Nuscene_dataset
+from IA.model_keras.data.Nuscene_dataset_normalised import Nuscene_dataset_normalized
 from IA.model_keras.model.model_orig import make_model
 from IA.model_keras.plot_graph.src.analyser.analyse import plot_model
 from IA.model_keras.markdown_summary.markdown_summary import create_summary
@@ -44,9 +45,14 @@ file_writer.set_as_default()
 
 
 classes_weights = args.classes_weights
-dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
-                          batch_size=args.batch_size,with_weights=classes_weights,
-                          summary_writer=file_writer,augmentation=args.augmentation)
+if args.lastActivation == "sigmoid" or args.lastActivation == "categorical_cross_entropy":
+    dataset = Nuscene_dataset_normalized(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
+                              batch_size=args.batch_size,with_weights=classes_weights,
+                              summary_writer=file_writer,augmentation=args.augmentation)
+else:
+    dataset = Nuscene_dataset(img_width=args.image_width,limit_nb_tr=args.nb_images,taille_mini_px=args.taille_mini_obj_px,
+                              batch_size=args.batch_size,with_weights=classes_weights,
+                              summary_writer=file_writer,augmentation=args.augmentation)
 
 
 def approx_accuracy(modeApprox="none"):
