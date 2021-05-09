@@ -8,3 +8,5 @@ class Nuscene_dataset_normalized(Nuscene_dataset):
     def getLabels(self, index_image):
         labels = super(Nuscene_dataset_normalized, self).getLabels(index_image)
         return labels / np.sum(labels)
+    def dataset_stats(self,summary_writer):
+        pass
