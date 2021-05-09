@@ -188,24 +188,24 @@ class Nuscene_dataset:
                     label[self.correspondances_classes_index[k]] += 1
         return label
 
-    def getLabelsWithUnitWeight(self, dataset="tr"):
+    def getLabelsWithUnitWeight(self, index, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on ne pondère pas chaque classe
         :param index_image: index de l'image dans le fichier json du dataset Nuscene
         :return: np.array, shape (2,#classes)
         """
-        label = self.getLabels()
+        label = self.getLabels(index)
         return np.stack((label, np.ones(label.shape)), axis=0)
 
-    def getLabelsWithWeightsPerClass(self, dataset="tr"):
+    def getLabelsWithWeightsPerClass(self, index, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on pondère chaque classe par son pourcentage d'apparition dans le dataset pour donner plus de poids aux classes sous-représentées
         :param index_image: index de l'image dans le fichier json du dataset Nuscene
         :return: np.array, shape (2,#classes)
         """
-        label = self.getLabels()
+        label = self.getLabels(index)
         poids = np.zeros(label.shape)
         if dataset == "tr":
             dico_stat = self.stat_per_class_tr
@@ -221,7 +221,7 @@ class Nuscene_dataset:
         poids /= total
         return np.stack((label, poids), axis=0)
 
-    def getLabelsWithWeightsPerClassEff(self, dataset="tr"):
+    def getLabelsWithWeightsPerClassEff(self, index, dataset="tr"):
         """
         Génère les labels (nombre d'objets de chaque classe présent sur une image et les poids associés
         Ici on pondère chaque classe par la fréquence de prédiction de cet effectif pour chaque classe :
@@ -231,7 +231,7 @@ class Nuscene_dataset:
         :param index_image: index de l'image dans le fichier json du dataset Nuscene
         :return: np.array, shape (2,#classes)
         """
-        label = self.getLabels()
+        label = self.getLabels(index)
         poids = np.zeros(label.shape)
         if dataset == "tr":
             dico_stat = self.stat_per_class_eff_tr
