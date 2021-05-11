@@ -9,9 +9,9 @@ class MakeConfusionMatrixEnet(MakeConfusionMatrix):
     On peut ensuite détecter les contours et compter le nombre d'objets"""
 
 
-    def __init__(self,*args,**kargs):
+    def __init__(self,seuils_threshold,*args,**kargs):
         super(MakeConfusionMatrixEnet, self).__init__(*args,**kargs)
-        self.seuils_threshold = [0.5,0.75,0.90]
+        self.seuils_threshold = seuils_threshold
     def add_sample(self,batch_img, batch_true):
         batch_pred = self.model.predict(batch_img)
         batch_true = np.array(batch_true.numpy(), dtype=np.float32)

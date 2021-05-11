@@ -87,6 +87,10 @@ nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=round -opti=a
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=round -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=softplus &> logsAdams11" & # TODO : DONE 2021-05-05_20h57min21s
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=1 -approxAccur=round -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=exponential &> logsAdams12" & # TODO : DONE 2021-05-05_21h01min04s
 
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=relu &> logsAdamszz1" & # TODO :
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=softplus &> logsAdamszz2" & # TODO :
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=1 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=exponential &> logsAdamszz3" & # TODO :
+
 # Regex 2021-05-05_16h50min08s|2021-05-05_20h57min21s|2021-05-05_21h01min04s|2021-05-04_20h15min51s
 
 #nohup bash -c "python3 train_dataset.py -bs=10 -gpu=... -approxAccur=round -opti=sgd -nbImg=7500 -nbEpochs=1 -lastAct=relu  &> logsSGD" &
@@ -112,7 +116,7 @@ nohup bash -c "python3 train_dataset.py -bs=10 -gpu=2 -approxAccur=int -opti=ada
 
 #  Avec sigmoid et softmax
 
-nohup bash -c "python3 train_dataset.py -gpu=0 -nbImg=7500 -lastAct=sigmoid &> logsAdamsz14" & # TODO DONE 2021-05-09_03h21min22s
-nohup bash -c "python3 train_dataset.py -gpu=2 -nbImg=7500 -lastAct=softmax &> logsAdamsz15" & # TODO DONE 2021-05-09_13h40min55s
+nohup bash -c "python3 train_dataset.py -gpu=0 -nbImg=7500 -lastAct=sigmoid &> logsAdamsz14" & # TODO doing
+nohup bash -c "python3 train_dataset.py -gpu=0 -nbImg=7500 -lastAct=softmax &> logsAdamsz15" & # TODO doing
 
 2021-05-05_21h19min48s|2021-05-09_03h21min22s|2021-05-09_13h40min55s

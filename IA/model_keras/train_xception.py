@@ -61,7 +61,7 @@ def approx_accuracy(modeApprox="none"):
         raise Exception("Unknown approximation function %s" % modeApprox)
 
     def approx_accuracy_round(y_true, y_pred):
-        nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
+        nb_classes = len(Nuscene_dataset.class_to_index.keys())
         # Extraction des informations des tenseurs
         y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[dataset.batch_size,1,nb_classes])
         y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
@@ -74,7 +74,7 @@ def approx_accuracy(modeApprox="none"):
     return approx_accuracy_round
 
 def loss_mse(y_true,y_pred):
-    nb_classes = len(Nuscene_dataset.correspondances_classes_index.keys())
+    nb_classes = len(Nuscene_dataset.class_to_index.keys())
     # Extraction des informations des tenseurs
     y_pred_extracted = tf.slice(y_pred,[0,0,0],size=[dataset.batch_size,1,nb_classes])
     y_pred_extracted = tf.reshape(y_pred_extracted,[dataset.batch_size,nb_classes])
@@ -89,8 +89,8 @@ def loss_mse(y_true,y_pred):
 
 
 with tf.device('/GPU:' + args.gpu_selected):
-    model = make_model(num_classes=len(dataset.correspondances_classes_index.keys()),
-                       last_activation=args.lastActivation,input_shape=(dataset.image_shape[1],dataset.image_shape[0],3))
+    model = make_model(num_classes=len(dataset.class_to_index.keys()),
+                       last_activation=args.lastActivation, input_shape=(dataset.image_shape[1],dataset.image_shape[0],3))
     if args.optimizer == "adam":
         optimizer_params = {"learning_rate": args.lr, "epsilon": args.epsilon}
         optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)
@@ -179,6 +179,6 @@ dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
     .prefetch(tf.data.experimental.AUTOTUNE)
 
 with tf.device('/GPU:' + args.gpu_selected):
-    MakeConfusionMatrix(model,dataset_full,
-                  len(dataset.correspondances_classes_index),dataset.correspondances_index_classes,
-                  summary_writer=file_writer)()
+    MakeConfusionMatrix(model, dataset_full,
+                        dataset.nb_classes, dataset.correspondances_index_classes,
+                        summary_writer=file_writer)()

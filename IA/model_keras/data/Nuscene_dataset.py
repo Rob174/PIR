@@ -16,8 +16,39 @@ from IA.model_keras.data.Luminance_augm import Luminance_augment
 matplotlib.use('Agg')
 
 
+# From https://stackoverflow.com/questions/1456373/two-way-reverse-map
+class TwoWayDict:
+    def __init__(self, dico):
+        self.main_dir_dict = dico
+        self.other_dir_dict = {v: k for k, v in dico.items()}
+        for k, v in dico.items():
+            self.__setitem__(k, v)
+            self.__setitem__(v, k)
+
+    def items(self, mode="direct"):
+        if mode == "direct":
+            return self.main_dir_dict.items()
+        else:
+            return self.other_dir_dict.items()
+
+    def keys(self, mode="direct"):
+        if mode == "direct":
+            return self.main_dir_dict.keys()
+        else:
+            return self.other_dir_dict.keys()
+
+    def values(self, mode="direct"):
+        if mode == "direct":
+            return self.main_dir_dict.values()
+        else:
+            return self.other_dir_dict.values()
+
+    def __len__(self):
+        return len(self.main_dir_dict)
+
+
 class Nuscene_dataset:
-    correspondances_classes_index = {
+    class_to_index = TwoWayDict({ # Must be in order
         "animal": 0,
         "human.pedestrian.adult": 1,
         "human.pedestrian.child": 2,
@@ -41,11 +72,12 @@ class Nuscene_dataset:
         "vehicle.motorcycle": 20,
         "vehicle.trailer": 21,
         "vehicle.truck": 22
-    }
+    })
     correspondances_index_classes = None
 
-    def __init__(self, summary_writer, tr_prct: float = 0.6, img_width: int = 1600, limit_nb_tr: int = None, taille_mini_px=10,
-                 with_weights="False", batch_size=10,augmentation="f"):
+    def __init__(self, summary_writer, tr_prct: float = 0.6, img_width: int = 1600, limit_nb_tr: int = None,
+                 taille_mini_px=10,
+                 with_weights="False", batch_size=10, augmentation="f"):
         """
 
         :param data_folder: chemin vers le dossier data
@@ -68,58 +100,54 @@ class Nuscene_dataset:
         if augmentation == "f":
             self.augmentations = []
         elif augmentation == "t":
-            self.augmentations = [Luminance_augment,Flou_augment]
-        Nuscene_dataset.correspondances_index_classes = {v:k for k,v in Nuscene_dataset.correspondances_classes_index.items()}
+            self.augmentations = [Luminance_augment, Flou_augment]
+        Nuscene_dataset.correspondances_index_classes = {v: k for k, v in
+                                                         Nuscene_dataset.class_to_index.items()}
         with open("/scratch/rmoine/PIR/extracted_data_nusceneImage.json", 'r') as dataset:
             self.content_dataset = json.load(dataset)
-            self.dataset_tr = list(range(0,int(len(self.content_dataset) * tr_prct)))
-            self.dataset_valid = list(range(int(len(self.content_dataset) * tr_prct),len(self.content_dataset)))
-            self.batch_size = batch_size
-            # Récupère la taille des images
-            self.root_dir = "/scratch/rmoine/PIR/nuscene/"
-            width, height = Image.open(self.root_dir + self.content_dataset[0]["imageName"]).size  # 1600x900
-            self.facteur_echelle = img_width / width
-            self.image_shape = (img_width, int(img_width / width * height))
-            self.taille_mini_px = taille_mini_px
-            if limit_nb_tr is not None:
-                self.limit_nb_tr = limit_nb_tr
-            else:
-                self.limit_nb_tr = len(self.dataset_tr)
-            # statistiques du dataset
-            self.dataset_stats(summary_writer)
-            self.get_labels_fct = None
-            if with_weights == "False":
-                self.get_labels_fct = self.getLabelsWithUnitWeight
-            elif with_weights == "class":
-                self.get_labels_fct = self.getLabelsWithWeightsPerClass
-            elif with_weights == "classEff":
-                self.get_labels_fct = self.getLabelsWithWeightsPerClassEff
-            else:
-                raise Exception("Class weight argument not recognized")
-    def dataset_stats(self,summary_writer):
+        self.dataset_tr = list(range(0, int(len(self.content_dataset) * tr_prct)))
+        self.dataset_valid = list(range(int(len(self.content_dataset) * tr_prct), len(self.content_dataset)))
+        self.batch_size = batch_size
+        # Récupère la taille des images
+        self.root_dir = "/scratch/rmoine/PIR/nuscene/"
+        width, height = Image.open(self.root_dir + self.content_dataset[0]["imageName"]).size  # 1600x900
+        self.facteur_echelle = img_width / width
+        self.image_shape = (img_width, int(img_width / width * height))
+        self.taille_mini_px = taille_mini_px
+        if limit_nb_tr is not None:
+            self.limit_nb_tr = limit_nb_tr
+        else:
+            self.limit_nb_tr = len(self.dataset_tr)
+        # statistiques du dataset
+        self.dataset_stats(summary_writer)
+        self.get_labels_fct = None
+        if with_weights == "False":
+            self.get_labels_fct = self.getLabelsWithUnitWeight
+        elif with_weights == "class":
+            self.get_labels_fct = self.getLabelsWithWeightsPerClass
+        elif with_weights == "classEff":
+            self.get_labels_fct = self.getLabelsWithWeightsPerClassEff
+        else:
+            raise Exception("Class weight argument not recognized")
 
-        self.stat_per_class_eff_tr = {classe: {} for classe in self.correspondances_classes_index.keys()}
-        self.stat_per_class_tr = {classe: 0 for classe in self.correspondances_classes_index.keys()}
-        for index_img in self.dataset_tr:
-            label = self.getLabels(index_img)
-            for index_class in range(len(label)):
-                self.stat_per_class_tr[self.correspondances_index_classes[index_class]] += label[index_class]
-                effectif = str(int(label[index_class]))
-                if effectif not in self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]].keys():
-                    self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] = 0
-                self.stat_per_class_eff_tr[self.correspondances_index_classes[index_class]][effectif] += 1
+    @property
+    def nb_classes(self):
+        return len(self.class_to_index)
 
-        self.stat_per_class_eff_valid = {classe: {} for classe in self.correspondances_classes_index.keys()}
-        self.stat_per_class_valid = {classe: 0 for classe in self.correspondances_classes_index.keys()}
-        for index_img in self.dataset_valid:
-            label = self.getLabels(index_img)
-            for index_class in range(len(label)):
-                self.stat_per_class_valid[self.correspondances_index_classes[index_class]] += label[index_class]
-                effectif = str(int(label[index_class]))
-                if effectif not in self.stat_per_class_eff_valid[
-                    self.correspondances_index_classes[index_class]].keys():
-                    self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] = 0
-                self.stat_per_class_eff_valid[self.correspondances_index_classes[index_class]][effectif] += 1
+    def dataset_stats(self, summary_writer):
+        for dataset,id in zip([self.dataset_tr,self.dataset_valid],["tr","valid"]):
+            stat_per_class_eff = {classe: {} for classe in self.class_to_index.keys()}
+            stat_per_class = {classe: 0 for classe in self.class_to_index.keys()}
+            for index_img in self.dataset_tr:
+                label = self.getLabels(index_img)
+                for class_index,class_name in self.class_to_index.items():
+                    stat_per_class[class_name] += label[class_index]
+                    effectif = str(int(label[class_index]))
+                    if effectif not in stat_per_class_eff[class_name].keys():
+                        stat_per_class_eff[class_name][effectif] = 0
+                    stat_per_class_eff[class_name][effectif] += 1
+            self.__setattr__("stat_per_class_eff_"+id,stat_per_class_eff)
+            self.__setattr__("stat_per_class_"+id,stat_per_class)
 
         # Ploting distributions
         with summary_writer.as_default():
@@ -151,6 +179,7 @@ class Nuscene_dataset:
                     summary_writer.flush()
                     plt.close()
         print("--------------------------------------STAT DONE--------------------------------------------------")
+
     def getImage(self, index_image):
         """
         Récupération de l'image de path précisé à l'index index_image du fichier json représentant le dataset Nuscene
@@ -160,7 +189,7 @@ class Nuscene_dataset:
         path = self.root_dir + self.content_dataset[index_image]["imageName"]
         image = Image.open(path)
         image = image.resize(self.image_shape)
-        image = np.array(image,dtype=np.float32) / 255.
+        image = np.array(image, dtype=np.float32) / 255.
         if self.augmentation == 't':
             for augmenteur in self.augmentations:
                 image = augmenteur.augment(image)
@@ -173,7 +202,7 @@ class Nuscene_dataset:
         :return: np.array de shape (#nb_classes, ) contenant l'effectif d'apparition de chaque classe sur cette image
         """
         dico_categorie_image = self.content_dataset[index_image]["categories"]
-        label = np.zeros((len(Nuscene_dataset.correspondances_classes_index.values())))
+        label = np.zeros((self.nb_classes,))
         for k, v in dico_categorie_image.items():
             for bounding_box_corners in v:
                 [coin1_x, coin1_y, coin2_x, coin2_y] = bounding_box_corners
@@ -185,7 +214,7 @@ class Nuscene_dataset:
                 coin2_transfo = matrice_scale_down.dot(coin2)
                 if abs(coin1_transfo[0] - coin2_transfo[0]) > self.taille_mini_px and abs(
                         coin1_transfo[1] - coin2_transfo[1]) > self.taille_mini_px:
-                    label[self.correspondances_classes_index[k]] += 1
+                    label[self.class_to_index[k]] += 1
         return label
 
     def getLabelsWithUnitWeight(self, index, dataset="tr"):
@@ -217,7 +246,7 @@ class Nuscene_dataset:
             dico_stat = self.stat_per_class_valid
         else:
             raise Exception(f"getLabelsWithWeightsPerClass : dataset unrecognized : {dataset}")
-        for i in range(len(label)):
+        for i, nom_classe in zip(range(self.nb_classes), ):
             nom_classe = Nuscene_dataset.correspondances_index_classes[i]
             effectif = label[i]
             poids[i] = dico_stat[nom_classe] if effectif > 0 else 0
@@ -251,7 +280,8 @@ class Nuscene_dataset:
             try:
                 poids[i] = dico_stat[nom_classe][str(int(effectif))]
             except:
-                raise Exception(f"Key {str(int(effectif))} not found in class {nom_classe} with {self.stat_per_class_eff[nom_classe]}")
+                raise Exception(
+                    f"Key {str(int(effectif))} not found in class {nom_classe} with {self.stat_per_class_eff[nom_classe]}")
         total = len(self.dataset_tr)
         poids /= total
         return np.stack((label, poids), axis=0)
@@ -268,7 +298,7 @@ class Nuscene_dataset:
         random.shuffle(self.dataset_tr)
         for i in self.dataset_tr[:self.limit_nb_tr]:
             img = self.getImage(i)
-            lab = self.get_labels_fct(i,dataset="tr")
+            lab = self.get_labels_fct(i, dataset="tr")
             if lab is None:
                 continue
             bufferImg.append(img)
@@ -291,7 +321,7 @@ class Nuscene_dataset:
         while True:
             for i in self.dataset_valid:
                 img = self.getImage(i)
-                lab = self.get_labels_fct(i,dataset="valid")
+                lab = self.get_labels_fct(i, dataset="valid")
                 if lab is None:
                     continue
                 bufferImg.append(img)

@@ -131,7 +131,7 @@ dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
     .prefetch(tf.data.experimental.AUTOTUNE)
 
 with tf.device('/GPU:'+args.gpu_selected):
-    MakeConfusionMatrixEnet(model=model,dataset=dataset_full,
-                  nb_classes=len(dataset.correspondances_classes_index),
-                  correspondances_index_classes=dataset.correspondances_index_classes,mode_approx='none',
-                  summary_writer=file_writer)()
+    MakeConfusionMatrixEnet(model=model, dataset=dataset_full,
+                            nb_classes=dataset.nb_classes,
+                            correspondances_index_classes=dataset.correspondances_index_classes, mode_approx='none',
+                            summary_writer=file_writer)()
