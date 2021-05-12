@@ -12,16 +12,27 @@ from pandas.plotting import table
 import seaborn as sns
 import tensorflow as tf
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 class Nuscene_dataset_segmentation(Nuscene_dataset):
 
     def __init__(self, seuils_threshold=(0.5,0.75,0.90),*args, **kargs):
+        self.seuils_threshold = seuils_threshold
         super(Nuscene_dataset_segmentation, self).__init__(*args, **kargs)
         self.correspondances_index_classes = {v:k for k,v in Nuscene_dataset.class_to_index.items()}
         self.get_labels_fct = self.getLabels
-        self.seuils_threshold = seuils_threshold
 
     def dataset_stats(self,summary_writer):
-
+        print(f"{bcolors.OKBLUE}DONE !{bcolors.ENDC}")
         for dataset_name,dataset in zip(["tr","valid"],[self.dataset_tr,self.dataset_valid]):
             repartition_objets = {classe:{} for classe in self.class_to_index.keys()}
             for i in dataset:
@@ -37,7 +48,7 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
                         if nb_contours not in repartition_objets[class_name]:
                             repartition_objets[class_name][nb_contours] = 0
                         repartition_objets[class_name][nb_contours] += 1
-            df: pd.DataFrame = pd.Dataframe(repartition_objets)
+            df: pd.DataFrame = pd.DataFrame(repartition_objets)
             df.to_csv(f"{FolderInfos.base_filename}_statistiques_{dataset_name}.csv")
             ax = sns.heatmap(df,annot=True,fmt='d', linewidths=.5)
             fig = ax.get_figure()
@@ -51,6 +62,7 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
             plt.savefig(f"{FolderInfos.base_filename}_stats_{dataset_name}")
             summary_writer.flush()
             plt.close()
+        print(f"{bcolors.OKBLUE}END !{bcolors.ENDC}")
 
     def getLabels(self, index_image,num_batch=None,*args,**kargs):
         """

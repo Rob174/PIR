@@ -21,9 +21,6 @@ class TwoWayDict:
     def __init__(self, dico):
         self.main_dir_dict = dico
         self.other_dir_dict = {v: k for k, v in dico.items()}
-        for k, v in dico.items():
-            self.__setitem__(k, v)
-            self.__setitem__(v, k)
 
     def items(self, mode="direct"):
         if mode == "direct":
@@ -42,7 +39,8 @@ class TwoWayDict:
             return self.main_dir_dict.values()
         else:
             return self.other_dir_dict.values()
-
+    def __getitem__(self, item):
+        return self.main_dir_dict[item]
     def __len__(self):
         return len(self.main_dir_dict)
 
@@ -96,6 +94,7 @@ class Nuscene_dataset:
                                              si ce cas se présente on va diminuer la loss concernant le nombre de chiens
         :param augmentation: indique si l'on doit réaliser les augmentations
         """
+        print("INIT")
         self.augmentation = augmentation
         if augmentation == "f":
             self.augmentations = []
@@ -119,6 +118,7 @@ class Nuscene_dataset:
         else:
             self.limit_nb_tr = len(self.dataset_tr)
         # statistiques du dataset
+        print("BEFORE")
         self.dataset_stats(summary_writer)
         self.get_labels_fct = None
         if with_weights == "False":
@@ -135,6 +135,7 @@ class Nuscene_dataset:
         return len(self.class_to_index)
 
     def dataset_stats(self, summary_writer):
+        print("PBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
         for dataset,id in zip([self.dataset_tr,self.dataset_valid],["tr","valid"]):
             stat_per_class_eff = {classe: {} for classe in self.class_to_index.keys()}
             stat_per_class = {classe: 0 for classe in self.class_to_index.keys()}
@@ -334,7 +335,7 @@ class Nuscene_dataset:
     def getNextBatchFullDataset(self):
         bufferLabel, bufferImg = [], []
         full_dataset = list(range(int(len(self.content_dataset))))
-        for i in full_dataset:
+        for i in full_dataset[:10]:
             img = self.getImage(i)
             lab = self.get_labels_fct(i, dataset="valid" if i in self.dataset_valid else "tr")
             if lab is None:

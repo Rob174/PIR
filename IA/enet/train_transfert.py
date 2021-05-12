@@ -45,7 +45,7 @@ file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
 
-dataset = Nuscene_dataset_segmentation(img_width=532,limit_nb_tr=args.nb_images,
+dataset = Nuscene_dataset_segmentation(img_width=532,limit_nb_tr=args.nb_images,seuils_threshold=[0.5,0.75,0.9],
                                        taille_mini_px=args.taille_mini_obj_px,
                                         batch_size=args.batch_size,with_weights="False",
                                         summary_writer=file_writer,augmentation=args.augmentation)
@@ -131,7 +131,7 @@ dataset_full = tf.data.Dataset.from_generator(dataset.getNextBatchFullDataset,
     .prefetch(tf.data.experimental.AUTOTUNE)
 
 with tf.device('/GPU:'+args.gpu_selected):
-    MakeConfusionMatrixEnet(model=model, dataset=dataset_full,
+    MakeConfusionMatrixEnet(model=model, dataset=dataset_full,seuils_threshold=dataset.seuils_threshold,
                             nb_classes=dataset.nb_classes,
                             correspondances_index_classes=dataset.correspondances_index_classes, mode_approx='none',
                             summary_writer=file_writer)()
