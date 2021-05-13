@@ -87,11 +87,11 @@ nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=round -opti=a
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=round -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=softplus &> logsAdams11" & # TODO : DONE 2021-05-05_20h57min21s
 nohup bash -c "python3 train_dataset.py -bs=10 -gpu=1 -approxAccur=round -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=exponential &> logsAdams12" & # TODO : DONE 2021-05-05_21h01min04s
 
-nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=relu &> logsAdamszz1" & # TODO :
-nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=softplus &> logsAdamszz2" & # TODO :
-nohup bash -c "python3 train_dataset.py -bs=10 -gpu=1 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=exponential &> logsAdamszz3" & # TODO :
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=relu &> logsAdamszz1" & # TODO : DONE 2021-05-10_19h40min32s
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=0 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=softplus &> logsAdamszz2" & # TODO : DONE 2021-05-10_19h41min43s
+nohup bash -c "python3 train_dataset.py -bs=10 -gpu=1 -approxAccur=int -opti=adam -nbImg=7500 -nbEpochs=1 -lastAct=exponential &> logsAdamszz3" & # TODO : DONE 2021-05-10_19h41min54s
 
-# Regex 2021-05-05_16h50min08s|2021-05-05_20h57min21s|2021-05-05_21h01min04s|2021-05-04_20h15min51s
+# Regex 2021-05-05_16h50min08s|2021-05-05_20h57min21s|2021-05-05_21h01min04s|2021-05-04_20h15min51s|2021-05-10_19h40min32s|2021-05-10_19h41min43s|2021-05-10_19h41min54s
 
 #nohup bash -c "python3 train_dataset.py -bs=10 -gpu=... -approxAccur=round -opti=sgd -nbImg=7500 -nbEpochs=1 -lastAct=relu  &> logsSGD" &
 #nohup bash -c "python3 train_dataset.py -bs=10 -gpu=... -approxAccur=round -opti=sgd -nbImg=7500 -nbEpochs=1 -lastAct=softplus  &> logsSGD" &

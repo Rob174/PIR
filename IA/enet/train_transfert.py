@@ -51,7 +51,7 @@ dataset = Nuscene_dataset_segmentation(img_width=532,limit_nb_tr=args.nb_images,
                                         summary_writer=file_writer,augmentation=args.augmentation)
 
 with tf.device('/GPU:' + args.gpu_selected):
-    model = create(532,299,nb_classes=23)
+    model = create(512,288,nb_classes=23) # TODO : predre multiples de 2
     if args.optimizer == "adam":
         optimizer_params = {"learning_rate": args.lr, "epsilon": args.epsilon}
         optimizer = Adam(learning_rate=args.lr, epsilon=args.epsilon)
