@@ -45,7 +45,7 @@ file_writer = tf.summary.create_file_writer(logdir)
 file_writer.set_as_default()
 
 
-dataset = Nuscene_dataset_segmentation(img_width=532,limit_nb_tr=args.nb_images,seuils_threshold=[0.5,0.75,0.9],
+dataset = Nuscene_dataset_segmentation(img_width=512,limit_nb_tr=args.nb_images,seuils_threshold=[0.5,0.75,0.9],
                                        taille_mini_px=args.taille_mini_obj_px,
                                         batch_size=args.batch_size,with_weights="False",
                                         summary_writer=file_writer,augmentation=args.augmentation)

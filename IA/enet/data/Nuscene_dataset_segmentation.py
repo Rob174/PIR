@@ -32,6 +32,8 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
         self.get_labels_fct = self.getLabels
 
     def dataset_stats(self,summary_writer):
+        if summary_writer is None:
+            return
         print(f"{bcolors.OKBLUE}DONE !{bcolors.ENDC}")
         for dataset_name,dataset in zip(["tr","valid"],[self.dataset_tr,self.dataset_valid]):
             repartition_objets = {classe:{} for classe in self.class_to_index.keys()}
@@ -44,7 +46,7 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
                                                          maxval=1.,
                                                          type=cv2.THRESH_BINARY)
                         img_threshold = (img_threshold * 255).astype(np.uint8)
-                        nb_contours = str(len(cv2.findContours(img_threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)))
+                        nb_contours = str(len(cv2.findContours(img_threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[0]))
                         if nb_contours not in repartition_objets[class_name]:
                             repartition_objets[class_name][nb_contours] = 0
                         repartition_objets[class_name][nb_contours] += 1

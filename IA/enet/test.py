@@ -23,4 +23,4 @@ dataset_tr = tf.data.Dataset.from_generator(dataset.getNextBatchTr,
                                                            tf.TensorShape([None, None, None,None])))\
     .prefetch(tf.data.experimental.AUTOTUNE).repeat(1)
 
-print(list(dataset_tr.take(1).as_numpy_iterator())[0][1].shape)
+super(type(dataset),dataset).getLabels(0)
