@@ -4,7 +4,9 @@ import argparse
 class Parser0:
     def __init__(self):
         self.parser = argparse.ArgumentParser()
-        self.args = {'-bs':['batch_size',10,int,"Indique le nombre d'images par batch"],
+        self.args = {
+                    '-img_w':['image_width',532,int,"Indique la gpu visible par le script tensorflow"],
+                    '-bs':['batch_size',10,int,"Indique le nombre d'images par batch"],
                     '-gpu':['gpu_selected',"0",str,"Indique la gpu visible par le script tensorflow"],
                     '-lr':['lr',1e-3,float,"Indique la gpu visible par le script tensorflow"],
                     '-eps':['epsilon',1e-7,float,"Indique la gpu visible par le script tensorflow"],
