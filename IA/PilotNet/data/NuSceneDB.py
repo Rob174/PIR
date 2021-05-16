@@ -50,7 +50,12 @@ class NuSceneDB(object):
         with open(json_path) as json_file:
             images = json.loads(json_file.read())
 
+            counter = 0
+
             for image in images:
+
+                counter += 1
+
                 filename = image['imageName']
                 categories = image['categories']
 
@@ -74,6 +79,9 @@ class NuSceneDB(object):
 
                     imgs.append(data_path + filename)
                     outputs.append(image_outputs)
+
+                if counter > 7500:
+                    break
 
         self.dataset_size = len(imgs)
         self.training_dataset_size = self.dataset_size * tr_prct
@@ -135,8 +143,12 @@ class NuSceneDB(object):
         bufferLabel, bufferImg = [], []
         full_dataset = list(range(int(len(self.imgs_path))))
         for i in full_dataset:
-            bufferImg.append(self.imgs_path[i])
+            image = Image.open(self.imgs_path[i])
+            image = image.resize((200, 66))
+            image = np.array(image, dtype=np.float32) / 255.
+            bufferImg.append(image)
             bufferLabel.append(self.outputs_values[i])
+
             if len(bufferImg) % self.batch_size == 0 and i > 0:
                 batches = np.stack(bufferImg, axis=0), np.stack(bufferLabel, axis=0)
                 bufferLabel, bufferImg = [], []
