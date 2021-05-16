@@ -9,17 +9,8 @@ If you decide to use another file structure you may have to change all the paths
 ### Initialization
 1. Download the nuscenes-devkit and rename it nusceneskit.
 2. Download the data from the nuscenes website.
-3. You should have the following structure:
-├── nuscenes_extraction                   
-|     ├── data              
-|     |   ├── maps                    
-|     |   ├── samples                   
-|     |   ├── sweeps                   
-|     |   ├── v1.0-mini                    
-|     ├── lidar                   
-|     |   ├── lidarseg
-|     |   ├── v1.0-mini
-|     ├── nusceneskit
+3. You should have the following structure: <br />
+![alt text](./structure.png)
 
 4. Launch the export_2D_annotations_as_json.py file located in the ./nusceneskit/pythonsdk/nuscenes/scripts/ folder (you may have to modify some paths in this script line 197).
 5. You have now a new file named image_annotations.json.
