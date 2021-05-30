@@ -52,8 +52,9 @@ class Nuscene_dataset_segmentation(Nuscene_dataset):
                         repartition_objets[class_name][nb_contours] += 1
             df: pd.DataFrame = pd.DataFrame(repartition_objets)
             df.to_csv(f"{FolderInfos.base_filename}_statistiques_{dataset_name}.csv")
-            ax = sns.heatmap(df,annot=True,fmt='d', linewidths=.5)
+            ax = sns.heatmap(df,annot=True)
             fig = ax.get_figure()
+            plt.tight_layout()
             # get image in numpy array (thanks to https://stackoverflow.com/questions/7821518/matplotlib-save-plot-to-numpy-array)
             fig.canvas.draw()
             data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
